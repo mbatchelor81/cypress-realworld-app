@@ -2,6 +2,11 @@ name: Devin CLI — Auto-generate Tests
 on:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - 'devin/**'
+
+permissions:
+  contents: write
 
 jobs:
   generate-tests:
@@ -10,7 +15,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.head_ref }}
 
       - name: Setup Devin CLI credentials
         run: |
@@ -23,18 +27,29 @@ jobs:
           echo "n" | curl -fsSL https://cli.devin.ai/install.sh | bash || true
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Verify Devin CLI
-        run: devin --version
-
-      - name: Step 1 — Analyze and generate tests
+      - name: Generate and verify tests
         run: |
           git fetch origin ${{ github.base_ref }}
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx')
-          devin -p --permission-mode dangerous \
-            -- "These files changed in this PR: $CHANGED.
-                1. Analyze each file and identify which functions/components lack unit test coverage.
-                2. Write unit tests for each uncovered function. Follow the existing test patterns in cypress/tests/ and src/__tests__/. Use Jest and React Testing Library. Place tests next to source files.
-                3. Run 'npx jest --passWithNoTests' to verify all tests pass. If any fail, fix them."
+          if [ -z "$CHANGED" ]; then echo "No TS/TSX files changed — skipping"; exit 0; fi
+
+          devin -p --permission-mode dangerous -- "
+            You are running inside CI.
+
+            These files changed in this PR:
+            $CHANGED
+
+            TASK:
+            1. Identify uncovered functions/components.
+            2. Generate Jest + React Testing Library tests.
+            3. Place tests next to source files.
+            4. Run: npx jest --passWithNoTests
+            5. If tests fail, fix them until they pass.
+            6. Exit non-zero if unable to produce passing tests.
+
+            Only modify test files.
+            Do not modify source files.
+          "
 
       - name: Commit generated tests
         run: |
