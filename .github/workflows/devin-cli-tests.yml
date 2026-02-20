@@ -2,6 +2,11 @@ name: Devin CLI — Auto-generate Tests
 on:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - 'devin/**'
+
+permissions:
+  contents: write
 
 jobs:
   generate-tests:
@@ -10,42 +15,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.head_ref }}
 
-      - name: Install Devin CLI
-        run: curl -fsSL https://static.devin.ai/cli-insiders-d029bf81/install.sh | bash
-
-      - name: Authenticate Devin CLI
+      - name: Setup Devin CLI credentials
         run: |
           mkdir -p ~/.local/share/cognition
           echo "windsurf_api_key = \"${{ secrets.WINDSURF_API_KEY }}\"" \
             > ~/.local/share/cognition/credentials.toml
 
-      - name: Step 1 — Analyze changed files
+      - name: Install Devin CLI
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
+          echo "n" | curl -fsSL https://cli.devin.ai/install.sh | bash || true
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Generate and verify tests
+        run: |
+          git fetch origin ${{ github.base_ref }}
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx')
-          devin -p --permission-mode dangerous \
-            --export /tmp/analysis.json \
-            -- "These files changed in this PR: $CHANGED. 
-                Analyze each file and identify which functions/components 
-                lack unit test coverage. List them."
+          if [ -z "$CHANGED" ]; then echo "No TS/TSX files changed — skipping"; exit 0; fi
 
-      - name: Step 2 — Generate tests
-        run: |
-          devin -p --permission-mode dangerous \
-            --continue \
-            --export /tmp/tests.json \
-            -- "Now write unit tests for each uncovered function you identified.
-                Follow the existing test patterns in cypress/tests/ and src/__tests__/.
-                Use Jest and React Testing Library. Place tests next to source files."
+          devin -p --permission-mode dangerous -- "
+            You are running inside CI.
 
-      - name: Step 3 — Verify tests pass
-        run: |
-          devin -p --permission-mode dangerous \
-            --continue \
-            -- "Run 'npx jest --passWithNoTests' to verify all tests pass. 
-                If any fail, fix them."
+            These files changed in this PR:
+            $CHANGED
+
+            TASK:
+            1. Identify uncovered functions/components.
+            2. Generate Jest + React Testing Library tests.
+            3. Place tests next to source files.
+            4. Run: npx jest --passWithNoTests
+            5. If tests fail, fix them until they pass.
+            6. Exit non-zero if unable to produce passing tests.
+
+            Only modify test files.
+            Do not modify source files.
+          "
 
       - name: Commit generated tests
         run: |
