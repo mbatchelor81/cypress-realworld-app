@@ -24,7 +24,7 @@ const theme = createTheme(
 
 /* istanbul ignore next */
 const onRedirectCallback = (appState: any) => {
-  history.replace((appState && appState.returnTo) || window.location.pathname);
+  history.replace(appState?.returnTo || window.location.pathname);
 };
 
 const root = createRoot(document.getElementById("root")!);
