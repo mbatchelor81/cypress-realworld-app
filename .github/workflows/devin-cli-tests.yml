@@ -31,23 +31,8 @@ jobs:
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx')
           if [ -z "$CHANGED" ]; then echo "No TS/TSX files changed — skipping"; exit 0; fi
 
-          devin -p --permission-mode dangerous -- "
-            You are running inside CI.
-
-            These files changed in this PR:
-            $CHANGED
-
-            TASK:
-            1. Identify uncovered functions/components.
-            2. Generate Jest + React Testing Library tests.
-            3. Place tests next to source files.
-            4. Run: npx jest --passWithNoTests
-            5. If tests fail, fix them until they pass.
-            6. Exit non-zero if unable to produce passing tests.
-
-            Only modify test files.
-            Do not modify source files.
-          "
+          devin -p --permission-mode dangerous -- "Hello"
+          
 
       - name: Commit generated tests
         run: |
