@@ -12,6 +12,7 @@ import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
 import { addResolversToSchema } from "@graphql-tools/schema";
 
 import auth from "./auth";
+import { seedDatabase } from "./database";
 import userRoutes from "./user-routes";
 import contactRoutes from "./contact-routes";
 import bankAccountRoutes from "./bankaccount-routes";
@@ -118,6 +119,8 @@ app.use("/notifications", notificationRoutes);
 app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
+
+seedDatabase();
 
 getBackendPort().then((port) => {
   app.listen(port);
