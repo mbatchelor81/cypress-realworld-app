@@ -86,10 +86,29 @@ const COMMENT_TABLE = "comments";
 const NOTIFICATION_TABLE = "notifications";
 const BANK_TRANSFER_TABLE = "banktransfers";
 
+require("dotenv").config();
+
+const PLACEHOLDER_PASSWORD = "HASHED_AT_RUNTIME";
+
 const databaseFile = path.join(__dirname, "../data/database.json");
 const adapter = new FileSync<DbSchema>(databaseFile);
 
 const db = low(adapter);
+
+const hashPlaceholderPasswords = () => {
+  const users = db.get(USER_TABLE).value();
+  if (users && users.some((user: User) => user.password === PLACEHOLDER_PASSWORD)) {
+    const defaultPassword = process.env.SEED_DEFAULT_USER_PASSWORD || "s3cret";
+    const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+    users.forEach((user: User) => {
+      if (user.password === PLACEHOLDER_PASSWORD) {
+        db.get(USER_TABLE).find({ id: user.id }).assign({ password: hashedPassword }).write();
+      }
+    });
+  }
+};
+
+hashPlaceholderPasswords();
 
 export const seedDatabase = () => {
   const testSeed = JSON.parse(
@@ -101,7 +120,7 @@ export const seedDatabase = () => {
 
   testSeed.users = testSeed.users.map((user: User) => ({
     ...user,
-    password: user.password === "HASHED_AT_RUNTIME" ? hashedPassword : user.password,
+    password: user.password === PLACEHOLDER_PASSWORD ? hashedPassword : user.password,
   }));
 
   // seed database with test data
