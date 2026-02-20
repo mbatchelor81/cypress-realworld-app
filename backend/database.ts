@@ -96,6 +96,13 @@ export const seedDatabase = () => {
     fs.readFileSync(path.join(process.cwd(), "data", "database-seed.json"), "utf-8")
   );
 
+  const defaultPassword = process.env.SEED_DEFAULT_USER_PASSWORD || "s3cret";
+  const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+  testSeed.users = testSeed.users.map((user: User) => ({
+    ...user,
+    password: hashedPassword,
+  }));
+
   // seed database with test data
   db.setState(testSeed).write();
   return;
