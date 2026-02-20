@@ -92,9 +92,17 @@ const adapter = new FileSync<DbSchema>(databaseFile);
 const db = low(adapter);
 
 export const seedDatabase = () => {
+  require("dotenv").config();
+
   const testSeed = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), "data", "database-seed.json"), "utf-8")
   );
+
+  const passwordHash = bcrypt.hashSync(process.env.SEED_DEFAULT_USER_PASSWORD!, 10);
+  testSeed.users = testSeed.users.map((user: User) => ({
+    ...user,
+    password: passwordHash,
+  }));
 
   // seed database with test data
   db.setState(testSeed).write();
