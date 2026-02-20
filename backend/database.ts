@@ -1,5 +1,6 @@
 import path from "path";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
 import fs from "fs";
 import { v4 } from "uuid";
 import {
@@ -92,9 +93,18 @@ const adapter = new FileSync<DbSchema>(databaseFile);
 const db = low(adapter);
 
 export const seedDatabase = () => {
+  dotenv.config();
+
   const testSeed = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), "data", "database-seed.json"), "utf-8")
   );
+
+  const defaultPassword = process.env.SEED_DEFAULT_USER_PASSWORD!;
+  const passwordHash = bcrypt.hashSync(defaultPassword, 10);
+  testSeed.users = testSeed.users.map((user: User) => ({
+    ...user,
+    password: passwordHash,
+  }));
 
   // seed database with test data
   db.setState(testSeed).write();
