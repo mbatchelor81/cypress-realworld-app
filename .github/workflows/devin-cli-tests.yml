@@ -18,9 +18,12 @@ jobs:
 
       - name: Setup Devin CLI credentials
         run: |
-          mkdir -p ~/.local/share/cognition
+          mkdir -p "$HOME/.local/share/cognition"
           echo "windsurf_api_key = \"${{ secrets.WINDSURF_API_KEY }}\"" \
-            > ~/.local/share/cognition/credentials.toml
+            > "$HOME/.local/share/cognition/credentials.toml"
+          echo "Credentials file written to $HOME/.local/share/cognition/credentials.toml"
+          cat "$HOME/.local/share/cognition/credentials.toml" | head -c 30
+          echo "..."
 
       - name: Install Devin CLI
         run: |
