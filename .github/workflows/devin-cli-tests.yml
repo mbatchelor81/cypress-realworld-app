@@ -30,6 +30,14 @@ jobs:
           echo "n" | curl -fsSL https://cli.devin.ai/install.sh | bash || true
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Debug CLI auth
+        run: |
+          devin --version
+          devin --help 2>&1 || true
+          devin auth --help 2>&1 || true
+          devin auth status 2>&1 || true
+          ls -la "$HOME/.local/share/cognition/"
+
       - name: Generate and verify tests
         run: |
           git fetch origin ${{ github.base_ref }}
