@@ -1,0 +1,55 @@
+name: Devin CLI — Auto-generate Tests
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  generate-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+
+      - name: Install Devin CLI
+        run: curl -fsSL https://static.devin.ai/cli-insiders-d029bf81/install.sh | bash
+
+      - name: Authenticate Devin CLI
+        run: |
+          mkdir -p ~/.local/share/cognition
+          echo "windsurf_api_key = \"${{ secrets.WINDSURF_API_KEY }}\"" \
+            > ~/.local/share/cognition/credentials.toml
+
+      - name: Step 1 — Analyze changed files
+        run: |
+          CHANGED=$(git diff --name-only origin/main...HEAD -- '*.ts' '*.tsx')
+          devin -p --permission-mode dangerous \
+            --export /tmp/analysis.json \
+            -- "These files changed in this PR: $CHANGED. 
+                Analyze each file and identify which functions/components 
+                lack unit test coverage. List them."
+
+      - name: Step 2 — Generate tests
+        run: |
+          devin -p --permission-mode dangerous \
+            --continue \
+            --export /tmp/tests.json \
+            -- "Now write unit tests for each uncovered function you identified.
+                Follow the existing test patterns in cypress/tests/ and src/__tests__/.
+                Use Jest and React Testing Library. Place tests next to source files."
+
+      - name: Step 3 — Verify tests pass
+        run: |
+          devin -p --permission-mode dangerous \
+            --continue \
+            -- "Run 'npx jest --passWithNoTests' to verify all tests pass. 
+                If any fail, fix them."
+
+      - name: Commit generated tests
+        run: |
+          git config user.name "Devin CLI"
+          git config user.email "devin-cli@ci"
+          git add -A
+          git diff --cached --quiet || git commit -m "test: auto-generate unit tests for PR changes"
+          git push

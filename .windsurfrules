@@ -1,0 +1,19 @@
+# Cypress Real World App — Windsurf Rules
+
+## TypeScript
+- Use strict mode
+- No `any` types — use proper interfaces
+
+## State Management
+- All state management uses XState machines in `src/machines/`
+- Follow existing machine patterns (context, events, states, services)
+
+## Testing
+- All new components must have unit tests
+- E2E tests go in `cypress/tests/`
+- Unit tests use Jest + React Testing Library
+
+## API
+- API routes follow RESTful conventions in `backend/`
+- Database access goes through `backend/database.ts`
+- All endpoints must validate input
