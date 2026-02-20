@@ -228,7 +228,7 @@
       "bankName": "Okuneva Inc Bank",
       "accountNumber": "4646527216",
       "routingNumber": "539125751",
-      "isDeleted": true,
+      "isDeleted": false,
       "createdAt": "2023-10-05T20:58:15.632Z",
       "modifiedAt": "2024-03-07T19:12:55.364Z"
     },
