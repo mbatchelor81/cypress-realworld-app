@@ -23,7 +23,7 @@ jobs:
 
       - name: Step 1 — Analyze changed files
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
+          git fetch origin ${{ github.base_ref }} --unshallow || git fetch origin ${{ github.base_ref }}
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx')
           devin -p --permission-mode dangerous \
             --export /tmp/analysis.json \
