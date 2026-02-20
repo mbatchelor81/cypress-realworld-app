@@ -55,4 +55,4 @@ jobs:
           git config user.email "devin-cli@ci"
           git add -A
           git diff --cached --quiet || git commit -m "test: auto-generate unit tests for PR changes"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
