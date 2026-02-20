@@ -42,6 +42,5 @@ describe("SignInForm", () => {
     cy.wait("@loginPost");
 
     cy.get("[data-test*=signin-error]").should("not.exist");
-
   });
 });
