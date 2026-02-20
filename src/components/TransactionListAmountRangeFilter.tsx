@@ -55,10 +55,7 @@ const AmountRangeFilter: React.FC<AmountRangeFilterProps> = ({
           </Typography>
         </Grid>
         <Grid item>
-          <Button
-            data-test="transaction-list-filter-amount-clear-button"
-            onClick={onClear}
-          >
+          <Button data-test="transaction-list-filter-amount-clear-button" onClick={onClear}>
             Clear
           </Button>
         </Grid>
