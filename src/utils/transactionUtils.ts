@@ -247,6 +247,12 @@ export const startOfDayUTC = (date: Date): Date => {
 };
 // not used in application code
 /* istanbul ignore next */
+export const formatTransactionTitle = (sender: User, receiver: User): string => {
+  const senderName = formatFullName(sender);
+  const receiverName = formatFullName(receiver);
+  return `${senderName} paid ${receiverName}`;
+};
+
 export const endOfDayUTC = (date: Date): Date => {
   if (!(date instanceof Date)) date = new Date();
   const utcDate = new Date(
