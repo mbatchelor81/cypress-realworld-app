@@ -72,7 +72,7 @@ export const totalContacts = userbaseSize! * contactsPerUser!;
 export const totalBankTransfers = userbaseSize! * bankTransfersPerUser * 2; // deposit & withdrawal
 
 export const isPayment = (type: string) => type === "payment";
-export const passwordHash = bcrypt.hashSync(defaultPassword, 10);
+export const passwordHash = "HASHED_AT_SEED_TIME";
 
 const requestScenarios: TransactionScenario[] = [
   {

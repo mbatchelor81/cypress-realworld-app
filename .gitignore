@@ -45,6 +45,9 @@ amplifytools.xcconfig
 # Yarn
 # See https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 # without zero installs
+# Runtime database (generated from seed)
+data/database.json
+
 .pnp.*
 .yarn/*
 !.yarn/patches
