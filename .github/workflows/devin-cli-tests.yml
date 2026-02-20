@@ -2,8 +2,6 @@ name: Devin CLI — Auto-generate Tests
 on:
   pull_request:
     types: [opened, synchronize]
-    branches-ignore:
-      - 'devin/**'
 
 permissions:
   contents: write
@@ -11,10 +9,19 @@ permissions:
 jobs:
   generate-tests:
     runs-on: ubuntu-latest
+    if: ${{ !startsWith(github.head_ref, 'devin/') && github.actor != 'github-actions[bot]' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
       - name: Setup Devin CLI credentials
         run: |
@@ -41,9 +48,9 @@ jobs:
 
             TASK:
             1. Identify uncovered functions/components.
-            2. Generate Jest + React Testing Library tests.
+            2. Generate Vitest + React Testing Library tests.
             3. Place tests next to source files.
-            4. Run: npx jest --passWithNoTests
+            4. Run: yarn test:unit:ci
             5. If tests fail, fix them until they pass.
             6. Exit non-zero if unable to produce passing tests.
 
