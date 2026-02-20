@@ -1,8 +1,6 @@
 name: Merge develop into flake-demo
 on:
-  push:
-    branches:
-      - develop
+  workflow_dispatch:  # Disabled — was push to develop trigger, changed to manual-only
 jobs:
   merge-master-into-develop:
     runs-on: ubuntu-latest
