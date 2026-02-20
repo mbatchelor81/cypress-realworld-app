@@ -16,19 +16,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Devin CLI credentials
+      - name: Install Devin CLI and setup credentials
         run: |
-          mkdir -p ~/.local/share/cognition
+          mkdir -p "$HOME/.local/share/cognition"
           echo "windsurf_api_key = \"${{ secrets.WINDSURF_API_KEY }}\"" \
-            > ~/.local/share/cognition/credentials.toml
-
-      - name: Install Devin CLI
-        run: |
+            > "$HOME/.local/share/cognition/credentials.toml"
           echo "n" | curl -fsSL https://cli.devin.ai/install.sh | bash || true
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Generate and verify tests
         run: |
+          devin auth status
           git fetch origin ${{ github.base_ref }}
           CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.ts' '*.tsx')
           if [ -z "$CHANGED" ]; then echo "No TS/TSX files changed — skipping"; exit 0; fi
@@ -57,4 +55,4 @@ jobs:
           git config user.email "devin-cli@ci"
           git add -A
           git diff --cached --quiet || git commit -m "test: auto-generate unit tests for PR changes"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
