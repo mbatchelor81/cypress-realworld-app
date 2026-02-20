@@ -29,8 +29,8 @@ DEVIN_HEADERS = {
 }
 
 
-def fetch_sonar_issues():
-    """Fetch all open issues from SonarQube API with pagination."""
+def fetch_sonar_issues_by_filter(types, severities):
+    """Fetch all open issues from SonarQube API with pagination for a given filter."""
     import urllib.request
     import base64
 
@@ -43,8 +43,8 @@ def fetch_sonar_issues():
         params = (
             f"?componentKeys={SONAR_PROJECT_KEY}"
             f"&statuses=OPEN,CONFIRMED,REOPENED"
-            f"&types=VULNERABILITY"
-            f"&severities=CRITICAL,BLOCKER"
+            f"&types={types}"
+            f"&severities={severities}"
             f"&ps={page_size}"
             f"&p={page}"
         )
@@ -69,67 +69,114 @@ def fetch_sonar_issues():
             break
         page += 1
 
-    return {"issues": all_issues, "total": len(all_issues)}
+    return all_issues
 
 
-async def create_devin_session(session, semaphore, issue):
-    """Create a Devin session for a single SonarQube issue."""
-    rule = issue.get("rule", "unknown")
-    severity = issue.get("severity", "MAJOR")
-    message = issue.get("message", "No description")
-    component = issue.get("component", "").replace(f"{SONAR_PROJECT_KEY}:", "")
-    line = issue.get("line", "unknown")
-    issue_type = issue.get("type", "CODE_SMELL")
-    issue_key = issue.get("key", "unknown")
+def fetch_all_issues():
+    """Fetch security vulnerabilities and code smells from SonarQube."""
+    vulns = fetch_sonar_issues_by_filter("VULNERABILITY", "CRITICAL,BLOCKER")
+    smells = fetch_sonar_issues_by_filter("CODE_SMELL", "MAJOR")
+    return vulns + smells
 
-    prompt = (
-        f"SonarQube Issue Remediation\n\n"
-        f"Issue Key: {issue_key}\n"
-        f"Rule: {rule}\n"
-        f"Type: {issue_type}\n"
-        f"Severity: {severity}\n"
-        f"File: {component}\n"
-        f"Line: {line}\n"
-        f"Message: {message}\n\n"
-        f"Instructions:\n"
-        f"1. Open `{component}` and fix the issue described above at/near line {line}\n"
-        f"2. Follow the SonarQube rule guidance for {rule}\n"
-        f"3. Run `npm test` and `npm run lint` to verify nothing breaks\n"
-        f"4. If tests fail, fix any regressions caused by the change\n"
-        f"5. Create a PR with the title: 'fix({issue_type.lower()}): resolve {severity.lower()} SonarQube issue in {component}'\n"
-    )
 
-    title = f"sonar-{issue_key}: {severity.lower()} {issue_type.lower()} in {component}"
-    data = {
+def group_issues(issues):
+    """Group issues by file + rule. Returns a list of issue groups."""
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for issue in issues:
+        component = issue.get("component", "").replace(f"{SONAR_PROJECT_KEY}:", "")
+        rule = issue.get("rule", "unknown")
+        groups[(component, rule)].append(issue)
+    return list(groups.values())
+
+
+def build_session_payload(issue_group):
+    """Build a Devin session payload from a group of related issues."""
+    first = issue_group[0]
+    rule = first.get("rule", "unknown")
+    severity = first.get("severity", "MAJOR")
+    message = first.get("message", "No description")
+    component = first.get("component", "").replace(f"{SONAR_PROJECT_KEY}:", "")
+    issue_type = first.get("type", "CODE_SMELL")
+    issue_keys = [i.get("key", "unknown") for i in issue_group]
+
+    if len(issue_group) == 1:
+        line = first.get("line", "unknown")
+        prompt = (
+            f"SonarQube Issue Remediation\n\n"
+            f"Rule: {rule}\n"
+            f"Type: {issue_type}\n"
+            f"Severity: {severity}\n"
+            f"File: {component}\n"
+            f"Line: {line}\n"
+            f"Message: {message}\n\n"
+            f"Instructions:\n"
+            f"1. Open `{component}` and fix the issue at/near line {line}\n"
+            f"2. Follow the SonarQube rule guidance for {rule}\n"
+            f"3. Run `npm test` and `npm run lint` to verify nothing breaks\n"
+            f"4. If tests fail, fix any regressions caused by the change\n"
+            f"5. Create a PR with the title: 'fix({issue_type.lower()}): resolve {severity.lower()} issue in {component}'\n"
+        )
+    else:
+        lines = [str(i.get("line", "?")) for i in issue_group]
+        prompt = (
+            f"SonarQube Issue Remediation — {len(issue_group)} occurrences\n\n"
+            f"Rule: {rule}\n"
+            f"Type: {issue_type}\n"
+            f"Severity: {severity}\n"
+            f"File: {component}\n"
+            f"Lines: {', '.join(lines)}\n"
+            f"Message: {message}\n\n"
+            f"Instructions:\n"
+            f"1. Open `{component}` and fix ALL {len(issue_group)} occurrences at lines {', '.join(lines)}\n"
+            f"2. Follow the SonarQube rule guidance for {rule}\n"
+            f"3. Run `npm test` and `npm run lint` to verify nothing breaks\n"
+            f"4. If tests fail, fix any regressions caused by the change\n"
+            f"5. Create a PR with the title: 'fix({issue_type.lower()}): resolve {len(issue_group)} {severity.lower()} issues in {component}'\n"
+        )
+
+    short_message = message[:80] + ("..." if len(message) > 80 else "")
+    count_label = f" ({len(issue_group)}x)" if len(issue_group) > 1 else ""
+    title = f"{severity}: {short_message}{count_label}"
+
+    return {
         "prompt": prompt,
         "create_as_user_id": CREATE_AS_USER_ID,
         "repos": [REPO],
         "title": title,
-        "tags": ["sonarqube", issue_key],
-    }
+        "tags": ["sonarqube"] + issue_keys,
+    }, component, len(issue_group)
 
+
+async def create_devin_session(http_session, semaphore, payload, label, count):
+    """Create a Devin session from a pre-built payload."""
     async with semaphore:
-        async with session.post(DEVIN_API_URL, headers=DEVIN_HEADERS, json=data) as resp:
+        async with http_session.post(DEVIN_API_URL, headers=DEVIN_HEADERS, json=payload) as resp:
             result = await resp.json()
             status = "created" if resp.status in (200, 201) else "failed"
-            print(f"[{status}] {component}:{line} ({severity} {issue_type}): {result.get('session_id', 'N/A')}")
+            print(f"[{status}] {label} ({count} issue(s)): {result.get('session_id', 'N/A')}")
             return result
 
 
 async def main():
     print(f"Querying SonarQube at {SONAR_HOST_URL} for project {SONAR_PROJECT_KEY}...")
-    data = fetch_sonar_issues()
-    issues = data.get("issues", [])
+    all_issues = fetch_all_issues()
 
-    if not issues:
+    if not all_issues:
         print("No issues found. Exiting.")
         return
 
-    print(f"Found {len(issues)} issues. Creating Devin sessions...")
+    groups = group_issues(all_issues)
+    print(f"Found {len(all_issues)} issues in {len(groups)} groups. Creating Devin sessions...")
+
+    payloads = [build_session_payload(g) for g in groups]
 
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_SESSIONS)
-    async with aiohttp.ClientSession() as session:
-        tasks = [create_devin_session(session, semaphore, issue) for issue in issues]
+    async with aiohttp.ClientSession() as http_session:
+        tasks = [
+            create_devin_session(http_session, semaphore, payload, label, count)
+            for payload, label, count in payloads
+        ]
         await asyncio.gather(*tasks)
 
     print("All sessions created.")
