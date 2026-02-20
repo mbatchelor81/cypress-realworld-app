@@ -180,6 +180,7 @@
     "db:seed": "yarn tsnode scripts/generateSeedData",
     "predb:seed:dev": "yarn predev:cognito:ci",
     "db:seed:dev": "ncp ./data/database-seed.json ./data/database.json",
+    "postdb:seed:dev": "yarn tsnode:not-instrumented -e \"require('./backend/database').seedDatabase()\"",
     "db:seed:empty": "ncp ./data/empty-seed.json ./data/database.json",
     "postdb:seed": "yarn db:seed:dev",
     "prestart": "yarn db:seed:dev",
