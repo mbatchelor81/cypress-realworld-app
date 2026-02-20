@@ -770,11 +770,8 @@ export const createNotifications = (userId: string, notifications: NotificationP
       return createPaymentNotification(userId, item.transactionId, item.status);
     } else if ("likeId" in item && item.type === NotificationsType.like) {
       return createLikeNotification(userId, item.transactionId, item.likeId);
-    } else {
-      /* istanbul ignore next */
-      if ("commentId" in item) {
-        return createCommentNotification(userId, item.transactionId, item.commentId);
-      }
+    } /* istanbul ignore next */ else if ("commentId" in item) {
+      return createCommentNotification(userId, item.transactionId, item.commentId);
     }
   });
 
