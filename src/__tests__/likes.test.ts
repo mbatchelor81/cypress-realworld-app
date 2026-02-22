@@ -11,27 +11,27 @@ import {
 import { User, Transaction } from "../../src/models";
 
 describe("Transactions", () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
-  it("should like a transaction for a contact", () => {
-    const user: User = getAllUsers()[0];
-    const transactions: Transaction[] = getTransactionsForUserContacts(user.id);
+  it("should like a transaction for a contact", async () => {
+    const user: User = (await getAllUsers())[0];
+    const transactions: Transaction[] = await getTransactionsForUserContacts(user.id);
 
-    const like = createLike(user.id, transactions[0].id);
+    const like = await createLike(user.id, transactions[0].id);
 
     expect(like.transactionId).toBe(transactions[0].id);
   });
 
-  it("should get a list of likes for a transaction", () => {
-    const user: User = getAllUsers()[0];
-    const transactions: Transaction[] = getTransactionsByUserId(user.id);
+  it("should get a list of likes for a transaction", async () => {
+    const user: User = (await getAllUsers())[0];
+    const transactions: Transaction[] = await getTransactionsByUserId(user.id);
     const transaction = transactions[0];
 
-    createLike(user.id, transaction.id);
+    await createLike(user.id, transaction.id);
 
-    const likes = getLikesByTransactionId(transaction.id);
+    const likes = await getLikesByTransactionId(transaction.id);
 
     expect(likes[0].transactionId).toBe(transaction.id);
   });

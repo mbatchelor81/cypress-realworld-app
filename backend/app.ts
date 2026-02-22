@@ -9,6 +9,7 @@ import paginate from "express-paginate";
 import { createHandler as graphqlHandler } from "graphql-http/lib/use/express";
 import { loadSchemaSync } from "@graphql-tools/load";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
+// @ts-ignore
 import { addResolversToSchema } from "@graphql-tools/schema";
 
 import auth from "./auth";
@@ -45,7 +46,7 @@ const schemaWithResolvers = addResolversToSchema({
 const app = express();
 
 /* istanbul ignore next */
-// @ts-expect-error
+// @ts-ignore
 if (global.__coverage__) {
   require("@cypress/code-coverage/middleware/express")(app);
 }

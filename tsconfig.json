@@ -10,7 +10,7 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -24,6 +24,8 @@
     "backend",
     "src/__tests__",
     "cypress.d.ts",
-    "src/utils/portUtils.ts"
+    "src/typings",
+    "src/utils/portUtils.ts",
+    "vite.config.ts"
   ]
 }

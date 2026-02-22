@@ -13,9 +13,9 @@ router.get(
   "/:transactionId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("transactionId")]),
-  (req, res) => {
+  async (req, res) => {
     const { transactionId } = req.params;
-    const comments = getCommentsByTransactionId(transactionId);
+    const comments = await getCommentsByTransactionId(transactionId);
 
     res.status(200);
     res.json({ comments });
@@ -27,12 +27,12 @@ router.post(
   "/:transactionId",
   ensureAuthenticated,
   validateMiddleware([shortIdValidation("transactionId"), isCommentValidator]),
-  (req, res) => {
+  async (req, res) => {
     const { transactionId } = req.params;
     const { content } = req.body;
 
     /* istanbul ignore next */
-    createComments(req.user?.id!, transactionId, content);
+    await createComments(req.user?.id!, transactionId, content);
 
     res.sendStatus(200);
   }

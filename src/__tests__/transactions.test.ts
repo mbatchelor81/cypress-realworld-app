@@ -30,59 +30,59 @@ import { getFakeAmount } from "../../src/utils/transactionUtils";
 import { totalTransactions, transactionsPerUser } from "../../scripts/seedDataUtils";
 
 describe("Transactions", () => {
-  beforeEach(() => {
-    seedDatabase();
+  beforeEach(async () => {
+    await seedDatabase();
   });
 
-  it("should retrieve a list of all transactions", () => {
-    expect(getAllTransactions().length).toBe(totalTransactions);
+  it("should retrieve a list of all transactions", async () => {
+    expect((await getAllTransactions()).length).toBe(totalTransactions);
   });
 
-  it("should retrieve a list of all public transactions", () => {
-    expect(getAllPublicTransactions().length).toBeGreaterThan(transactionsPerUser);
-    expect(getAllPublicTransactions().length).toBeLessThan(totalTransactions);
+  it("should retrieve a list of all public transactions", async () => {
+    expect((await getAllPublicTransactions()).length).toBeGreaterThan(transactionsPerUser);
+    expect((await getAllPublicTransactions()).length).toBeLessThan(totalTransactions);
   });
 
-  it("should retrieve a list of transactions for a user (user is receiver)", () => {
-    const userToLookup: User = getAllUsers()[0];
+  it("should retrieve a list of transactions for a user (user is receiver)", async () => {
+    const userToLookup: User = (await getAllUsers())[0];
 
-    const result: Transaction[] = getTransactionsForUserByObj(userToLookup.id, {
+    const result: Transaction[] = await getTransactionsForUserByObj(userToLookup.id, {
       status: "complete",
     });
     expect(result[0].receiverId).toBe(userToLookup.id);
   });
 
-  it("should retrieve a list of transactions for a user (user is sender)", () => {
-    const userToLookup: User = getAllUsers()[0];
+  it("should retrieve a list of transactions for a user (user is sender)", async () => {
+    const userToLookup: User = (await getAllUsers())[0];
 
-    const result: Transaction[] = getTransactionsForUserByObj(userToLookup.id, {});
+    const result: Transaction[] = await getTransactionsForUserByObj(userToLookup.id, {});
     expect(result.pop()!.senderId).toBe(userToLookup.id);
   });
 
-  it("should retrieve a list of transactions for a users contacts", () => {
-    const userToLookup: User = getAllUsers()[0];
-    const result: Transaction[] = getTransactionsForUserContacts(userToLookup.id);
+  it("should retrieve a list of transactions for a users contacts", async () => {
+    const userToLookup: User = (await getAllUsers())[0];
+    const result: Transaction[] = await getTransactionsForUserContacts(userToLookup.id);
 
     expect(result.length).toBeGreaterThan(transactionsPerUser);
     expect(result.length).toBeLessThan(totalTransactions);
   });
 
-  it("should retrieve a list of transactions for a users contacts - between date range", () => {
-    const userToLookup: User = getAllUsers()[0];
-    const result: Transaction[] = getTransactionsForUserContacts(userToLookup.id, {
+  it("should retrieve a list of transactions for a users contacts - between date range", async () => {
+    const userToLookup: User = (await getAllUsers())[0];
+    const result: Transaction[] = await getTransactionsForUserContacts(userToLookup.id, {
       dateRangeStart: new Date("Mar 09 2023"),
       dateRangeEnd: new Date("Mar 09 2024"),
     });
     expect(result.length).toBeGreaterThan(1);
   });
 
-  it("should retrieve a list of public transactions, default sort", () => {
-    const user: User = getAllUsers()[0];
-    const contactsTransactions: Transaction[] = getTransactionsForUserContacts(user.id);
+  it("should retrieve a list of public transactions, default sort", async () => {
+    const user: User = (await getAllUsers())[0];
+    const contactsTransactions: Transaction[] = await getTransactionsForUserContacts(user.id);
     expect(contactsTransactions.length).toBeGreaterThan(1);
     expect(contactsTransactions.length).toBeLessThan(totalTransactions);
 
-    const response = getPublicTransactionsDefaultSort(user.id);
+    const response = await getPublicTransactionsDefaultSort(user.id);
 
     expect(response.contactsTransactions.length).toBeGreaterThan(1);
     expect(response.contactsTransactions.length).toBeLessThan(totalTransactions);
@@ -93,10 +93,10 @@ describe("Transactions", () => {
     expect(ids).toContain(response.contactsTransactions[9].id);
   });
 
-  it("should create a payment", () => {
-    const sender: User = getAllUsers()[0];
-    const receiver: User = getAllUsers()[1];
-    const senderBankAccount = getBankAccountsByUserId(sender.id)[0];
+  it("should create a payment", async () => {
+    const sender: User = (await getAllUsers())[0];
+    const receiver: User = (await getAllUsers())[1];
+    const senderBankAccount = (await getBankAccountsByUserId(sender.id))[0];
 
     const paymentDetails: TransactionPayload = {
       source: senderBankAccount.id!,
@@ -108,16 +108,16 @@ describe("Transactions", () => {
       status: TransactionStatus.pending,
     };
 
-    const result = createTransaction(sender.id, "payment", paymentDetails);
+    const result = await createTransaction(sender.id, "payment", paymentDetails);
     expect(result.id).toBeDefined();
     expect(result.status).toEqual("complete");
     expect(result.requestStatus).not.toBeDefined();
   });
 
-  it("should create a request", () => {
-    const sender: User = getAllUsers()[0];
-    const receiver: User = getAllUsers()[1];
-    const senderBankAccount = getBankAccountsByUserId(sender.id)[0];
+  it("should create a request", async () => {
+    const sender: User = (await getAllUsers())[0];
+    const receiver: User = (await getAllUsers())[1];
+    const senderBankAccount = (await getBankAccountsByUserId(sender.id))[0];
 
     const requestDetails: TransactionPayload = {
       source: senderBankAccount.id!,
@@ -129,16 +129,16 @@ describe("Transactions", () => {
       status: TransactionStatus.pending,
     };
 
-    const result = createTransaction(sender.id, "request", requestDetails);
+    const result = await createTransaction(sender.id, "request", requestDetails);
     expect(result.id).toBeDefined();
     expect(result.status).toEqual("pending");
     expect(result.requestStatus).toEqual("pending");
   });
 
-  it("should create a payment and find it in the personal transactions", () => {
-    const sender: User = getAllUsers()[0];
-    const receiver: User = getAllUsers()[1];
-    const senderBankAccount = getBankAccountsByUserId(sender.id)[0];
+  it("should create a payment and find it in the personal transactions", async () => {
+    const sender: User = (await getAllUsers())[0];
+    const receiver: User = (await getAllUsers())[1];
+    const senderBankAccount = (await getBankAccountsByUserId(sender.id))[0];
 
     const paymentDetails: TransactionPayload = {
       source: senderBankAccount.id!,
@@ -150,18 +150,18 @@ describe("Transactions", () => {
       status: TransactionStatus.pending,
     };
 
-    const payment = createTransaction(sender.id, "payment", paymentDetails);
+    const payment = await createTransaction(sender.id, "payment", paymentDetails);
     expect(payment.id).toBeDefined();
 
-    const personalTransactions: Transaction[] = getTransactionsForUserByObj(sender.id, {});
+    const personalTransactions: Transaction[] = await getTransactionsForUserByObj(sender.id, {});
     const ids = map("id", personalTransactions);
     expect(ids).toContain(payment.id);
   });
 
-  it("should reject (update) a transaction", () => {
-    const user: User = getAllUsers()[0];
+  it("should reject (update) a transaction", async () => {
+    const user: User = (await getAllUsers())[0];
 
-    const transactions = getTransactionsByUserId(user.id);
+    const transactions = await getTransactionsByUserId(user.id);
     expect(transactions.length).toBeGreaterThanOrEqual(transactionsPerUser);
 
     const transaction = transactions[0];
@@ -170,16 +170,16 @@ describe("Transactions", () => {
     const edits: Partial<Transaction> = {
       requestStatus: TransactionRequestStatus.rejected,
     };
-    updateTransactionById(transaction.id, edits);
+    await updateTransactionById(transaction.id, edits);
 
-    const updatedTransaction = getTransactionById(transaction.id);
+    const updatedTransaction = await getTransactionById(transaction.id);
     expect(updatedTransaction.requestStatus).toEqual("rejected");
   });
 
-  it("should accept (update) a transaction", () => {
-    const user: User = getAllUsers()[0];
+  it("should accept (update) a transaction", async () => {
+    const user: User = (await getAllUsers())[0];
 
-    const transactions = getTransactionsByUserId(user.id);
+    const transactions = await getTransactionsByUserId(user.id);
     expect(transactions.length).toBeGreaterThanOrEqual(transactionsPerUser);
 
     const transaction = transactions[0];
@@ -188,21 +188,21 @@ describe("Transactions", () => {
     const edits: Partial<Transaction> = {
       requestStatus: TransactionRequestStatus.accepted,
     };
-    updateTransactionById(transaction.id, edits);
+    await updateTransactionById(transaction.id, edits);
 
-    const updatedTransaction = getTransactionById(transaction.id);
+    const updatedTransaction = await getTransactionById(transaction.id);
     expect(updatedTransaction.requestStatus).toEqual("accepted");
   });
 
-  it("should add additional fields (e.g. retreiverName, senderName, etc) to a list of transactions for a user for API response", () => {
-    const userToLookup: User = getAllUsers()[0];
+  it("should add additional fields (e.g. retreiverName, senderName, etc) to a list of transactions for a user for API response", async () => {
+    const userToLookup: User = (await getAllUsers())[0];
 
-    const result = getPublicTransactionsDefaultSort(userToLookup.id);
+    const result = await getPublicTransactionsDefaultSort(userToLookup.id);
 
     const transaction = result.publicTransactions[0];
     const { receiverId, senderId, receiverName, senderName } = transaction;
-    const receiver = getUserById(receiverId);
-    const sender = getUserById(senderId);
+    const receiver = await getUserById(receiverId);
+    const sender = await getUserById(senderId);
 
     expect(receiverName).toBe(`${receiver.firstName} ${receiver.lastName}`);
     expect(senderName).toBe(`${sender.firstName} ${sender.lastName}`);
@@ -210,14 +210,14 @@ describe("Transactions", () => {
     expect(transaction.comments).toBeDefined();
   });
 
-  it.skip("should create a payment and withdrawal (bank transfer) for remaining balance", () => {
-    const sender: User = getAllUsers()[0];
-    const receiver: User = getAllUsers()[1];
-    const senderBankAccount = getBankAccountsByUserId(sender.id)[0];
+  it.skip("should create a payment and withdrawal (bank transfer) for remaining balance", async () => {
+    const sender: User = (await getAllUsers())[0];
+    const receiver: User = (await getAllUsers())[1];
+    const senderBankAccount = (await getBankAccountsByUserId(sender.id))[0];
     const firstPaymentAmount = 1000;
     const secondPaymentAmount = 500;
 
-    const receiverTransactions = getTransactionsByUserId(receiver.id);
+    const receiverTransactions = await getTransactionsByUserId(receiver.id);
     expect(receiverTransactions.length).toBeGreaterThan(1);
 
     console.log("sender balance:", sender.balance + 1000);
@@ -231,15 +231,15 @@ describe("Transactions", () => {
       status: TransactionStatus.pending,
     };
 
-    const transaction = createTransaction(sender.id, "payment", paymentDetails);
+    const transaction = await createTransaction(sender.id, "payment", paymentDetails);
     expect(transaction.id).toBeDefined();
     expect(transaction.status).toEqual("complete");
     expect(transaction.requestStatus).not.toBeDefined();
 
-    const updatedSender: User = getAllUsers()[0];
+    const updatedSender: User = (await getAllUsers())[0];
     expect(updatedSender.balance).toBe(0);
 
-    const withdrawal = getBankTransferByTransactionId(transaction.id);
+    const withdrawal = await getBankTransferByTransactionId(transaction.id);
     expect(withdrawal.type).toBe(BankTransferType.withdrawal);
     expect(withdrawal.amount).toBe(firstPaymentAmount);
 
@@ -253,37 +253,37 @@ describe("Transactions", () => {
       privacyLevel: DefaultPrivacyLevel.public,
       status: TransactionStatus.pending,
     };
-    const secondTransaction = createTransaction(sender.id, "payment", secondPaymentDetails);
+    const secondTransaction = await createTransaction(sender.id, "payment", secondPaymentDetails);
     expect(secondTransaction.id).toBeDefined();
     expect(secondTransaction.status).toEqual("complete");
     expect(secondTransaction.requestStatus).not.toBeDefined();
 
-    const secondUpdatedSender: User = getAllUsers()[0];
+    const secondUpdatedSender: User = (await getAllUsers())[0];
     expect(secondUpdatedSender.balance).toBe(0);
 
-    const secondWithdrawal = getBankTransferByTransactionId(secondTransaction.id);
+    const secondWithdrawal = await getBankTransferByTransactionId(secondTransaction.id);
     expect(secondWithdrawal.type).toBe(BankTransferType.withdrawal);
     expect(secondWithdrawal.amount).toBe(secondPaymentAmount);
 
     // Verify Deposit Transactions for Receiver
-    const updatedReceiverTransactions = getTransactionsByUserId(receiver.id);
+    const updatedReceiverTransactions = await getTransactionsByUserId(receiver.id);
 
     expect(updatedReceiverTransactions.length).toBe(receiverTransactions.length + 2);
 
     // Verify Receiver's Updated App Balance
-    const updatedReceiver: User = getAllUsers()[1];
+    const updatedReceiver: User = (await getAllUsers())[1];
     expect(updatedReceiver.balance).toBe(
       receiver.balance + firstPaymentAmount + secondPaymentAmount
     );
   });
 
-  it.skip("should create a request and withdrawal (bank transfer) for remaining balance", () => {
-    const sender: User = getAllUsers()[0];
-    const receiver: User = getAllUsers()[1];
-    const senderBankAccount = getBankAccountsByUserId(sender.id)[0];
+  it.skip("should create a request and withdrawal (bank transfer) for remaining balance", async () => {
+    const sender: User = (await getAllUsers())[0];
+    const receiver: User = (await getAllUsers())[1];
+    const senderBankAccount = (await getBankAccountsByUserId(sender.id))[0];
     const requestAmount = 100;
 
-    const receiverTransactions = getTransactionsByUserId(receiver.id);
+    const receiverTransactions = await getTransactionsByUserId(receiver.id);
     expect(receiverTransactions.length).toBeGreaterThan(1);
 
     const requestDetails: TransactionPayload = {
@@ -296,7 +296,7 @@ describe("Transactions", () => {
       status: TransactionStatus.pending,
     };
 
-    const transaction = createTransaction(sender.id, "request", requestDetails);
+    const transaction = await createTransaction(sender.id, "request", requestDetails);
     expect(transaction.id).toBeDefined();
     expect(transaction.status).toEqual("pending");
     expect(transaction.requestStatus).toBe(TransactionRequestStatus.pending);
@@ -304,21 +304,21 @@ describe("Transactions", () => {
     const edits: Partial<Transaction> = {
       requestStatus: TransactionRequestStatus.accepted,
     };
-    updateTransactionById(transaction.id, edits);
+    await updateTransactionById(transaction.id, edits);
 
-    const updatedTransaction = getTransactionById(transaction.id);
+    const updatedTransaction = await getTransactionById(transaction.id);
     expect(updatedTransaction.requestStatus).toEqual("accepted");
 
-    const updatedReceiver: User = getAllUsers()[1];
+    const updatedReceiver: User = (await getAllUsers())[1];
     expect(updatedReceiver.balance).toBe(receiver.balance + requestAmount);
 
     // Verify Deposit Transactions for Sender
-    const updatedSenderTransactions = getTransactionsByUserId(sender.id);
+    const updatedSenderTransactions = await getTransactionsByUserId(sender.id);
 
     expect(updatedSenderTransactions.length).toBe(receiverTransactions.length + 2);
 
     // Verify Sender's Updated App Balance
-    const updatedSender: User = getAllUsers()[0];
+    const updatedSender: User = (await getAllUsers())[0];
     expect(updatedSender.balance).toBe(sender.balance - requestAmount);
   });
 });
