@@ -31,9 +31,9 @@ import {
 
 describe("Notifications", () => {
   let user: User;
-  beforeEach(() => {
-    seedDatabase();
-    user = getAllUsers()[0];
+  beforeEach(async () => {
+    await seedDatabase();
+    user = (await getAllUsers())[0];
   });
 
   describe("create notifications", () => {
@@ -44,20 +44,20 @@ describe("Notifications", () => {
     let likeNotification: LikeNotification;
     let comment: Comment;
     let commentNotification: CommentNotification;
-    beforeEach(() => {
-      user = getAllUsers()[0];
-      transactions = getTransactionsForUserContacts(user.id);
+    beforeEach(async () => {
+      user = (await getAllUsers())[0];
+      transactions = await getTransactionsForUserContacts(user.id);
       transaction = transactions[0];
-      paymentNotification = createPaymentNotification(
+      paymentNotification = await createPaymentNotification(
         user.id,
         transaction.id,
         PaymentNotificationStatus.received
       );
-      like = createLike(user.id, transaction.id);
-      likeNotification = createLikeNotification(user.id, transaction.id, like.id);
-      comment = createComment(user.id, transaction.id, "This is my comment");
+      like = await createLike(user.id, transaction.id);
+      likeNotification = await createLikeNotification(user.id, transaction.id, like.id);
+      comment = await createComment(user.id, transaction.id, "This is my comment");
 
-      commentNotification = createCommentNotification(user.id, transaction.id, comment.id);
+      commentNotification = await createCommentNotification(user.id, transaction.id, comment.id);
     });
 
     it("should create a payment notification for a transaction", () => {
@@ -75,12 +75,12 @@ describe("Notifications", () => {
       expect(commentNotification.commentId).toBe(comment.id);
     });
 
-    it("should format comment notification for api", () => {
-      const apiNotification = formatNotificationForApiResponse(commentNotification);
+    it("should format comment notification for api", async () => {
+      const apiNotification = await formatNotificationForApiResponse(commentNotification);
       expect(apiNotification.userFullName).toBeDefined();
     });
 
-    it("should create notifications for a transaction", () => {
+    it("should create notifications for a transaction", async () => {
       const notificationsPayload = [
         {
           type: NotificationsType.payment,
@@ -99,7 +99,7 @@ describe("Notifications", () => {
         },
       ];
 
-      const notifications = createNotifications(user.id, notificationsPayload);
+      const notifications = await createNotifications(user.id, notificationsPayload);
 
       expect(notifications[0]!.transactionId).toBe(transaction.id);
       // @ts-ignore
@@ -109,17 +109,17 @@ describe("Notifications", () => {
     });
   });
 
-  it("should get a list of notifications for a user", () => {
-    const transactions: Transaction[] = getTransactionsByUserId(user.id);
+  it("should get a list of notifications for a user", async () => {
+    const transactions: Transaction[] = await getTransactionsByUserId(user.id);
     const transaction = transactions[0];
 
     // create comment and like and notifications for transaction
-    const comment = createComment(user.id, transaction.id, "This is my notification content");
-    createCommentNotification(user.id, transaction.id, comment.id);
-    const like = createLike(user.id, transaction.id);
-    createLikeNotification(user.id, transaction.id, like.id);
+    const comment = await createComment(user.id, transaction.id, "This is my notification content");
+    await createCommentNotification(user.id, transaction.id, comment.id);
+    const like = await createLike(user.id, transaction.id);
+    await createLikeNotification(user.id, transaction.id, like.id);
 
-    const notifications = getNotificationsByUserId(user.id);
+    const notifications = await getNotificationsByUserId(user.id);
 
     expect(notifications.length).toBeGreaterThan(1);
     expect(notifications[notifications.length - 1]).toMatchObject({
@@ -127,16 +127,16 @@ describe("Notifications", () => {
     });
   });
 
-  it("should update a notification", () => {
-    const notifications = getNotificationsByUserId(user.id);
+  it("should update a notification", async () => {
+    const notifications = await getNotificationsByUserId(user.id);
     const edits: Partial<NotificationType> = {
       isRead: true,
     };
     // @ts-ignore
-    updateNotificationById(user.id, notifications[0].id, edits);
+    await updateNotificationById(user.id, notifications[0].id, edits);
 
     // @ts-ignore
-    const updatedNotification = getNotificationById(notifications[0].id);
+    const updatedNotification = await getNotificationById(notifications[0].id);
     expect(updatedNotification.isRead).toBe(true);
   });
 });

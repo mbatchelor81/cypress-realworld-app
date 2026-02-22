@@ -1,26 +1,15 @@
-import path from "path";
 import bcrypt from "bcryptjs";
-import fs from "fs";
 import { v4 } from "uuid";
 import {
   uniqBy,
   map,
   sample,
-  reject,
-  includes,
   orderBy,
-  flow,
   flatMap,
-  curry,
   get,
-  constant,
-  filter,
-  inRange,
   remove,
 } from "lodash/fp";
 import { isWithinInterval } from "date-fns";
-import low from "lowdb";
-import FileSync from "lowdb/adapters/FileSync";
 import shortid from "shortid";
 import {
   BankAccount,
@@ -47,7 +36,6 @@ import {
   TransactionQueryPayload,
   DefaultPrivacyLevel,
 } from "../src/models";
-import Fuse from "fuse.js";
 import {
   isPayment,
   getTransferAmount,
@@ -65,6 +53,8 @@ import {
   isCommentNotification,
 } from "../src/utils/transactionUtils";
 import { DbSchema } from "../src/models/db-schema";
+import { supabase } from "./supabase-client";
+import { buildDatabase } from "../scripts/seedDataUtils";
 
 export type TDatabase = {
   users: User[];
@@ -86,82 +76,110 @@ const COMMENT_TABLE = "comments";
 const NOTIFICATION_TABLE = "notifications";
 const BANK_TRANSFER_TABLE = "banktransfers";
 
-const databaseFile = path.join(__dirname, "../data/database.json");
-const adapter = new FileSync<DbSchema>(databaseFile);
-
-const db = low(adapter);
-
-export const seedDatabase = () => {
-  const testSeed = JSON.parse(
-    fs.readFileSync(path.join(process.cwd(), "data", "database-seed.json"), "utf-8")
-  );
-
-  // seed database with test data
-  db.setState(testSeed).write();
-  return;
+// Helper to throw on Supabase errors
+const throwIfError = <T>(result: { data: T | null; error: any }): T => {
+  if (result.error) throw result.error;
+  return result.data as T;
 };
 
-export const getAllUsers = () => db.get(USER_TABLE).value();
+export const seedDatabase = async () => {
+  const testSeed: TDatabase = buildDatabase();
 
-export const getAllPublicTransactions = () =>
-  db.get(TRANSACTION_TABLE).filter({ privacyLevel: DefaultPrivacyLevel.public }).value();
+  // Truncate tables in reverse FK order
+  const tables = [
+    BANK_TRANSFER_TABLE,
+    NOTIFICATION_TABLE,
+    COMMENT_TABLE,
+    LIKE_TABLE,
+    TRANSACTION_TABLE,
+    BANK_ACCOUNT_TABLE,
+    CONTACT_TABLE,
+    USER_TABLE,
+  ];
 
-export const getAllForEntity = (entity: keyof DbSchema) => db.get(entity).value();
+  for (const table of tables) {
+    // Delete all rows — neq id '' matches everything since all ids are non-empty
+    await supabase.from(table).delete().neq("id", "");
+  }
 
-export const getAllBy = (entity: keyof DbSchema, key: string, value: any) => {
-  const result = db
-    .get(entity)
-    // @ts-ignore
-    .filter({ [`${key}`]: value })
-    .value();
+  // Insert in FK order
+  // Batch inserts in chunks of 500 to avoid payload limits
+  const chunkInsert = async (table: string, rows: any[]) => {
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      throwIfError(await supabase.from(table).insert(chunk));
+    }
+  };
 
-  return result;
+  await chunkInsert(USER_TABLE, testSeed.users);
+  await chunkInsert(CONTACT_TABLE, testSeed.contacts);
+  await chunkInsert(BANK_ACCOUNT_TABLE, testSeed.bankaccounts);
+  await chunkInsert(TRANSACTION_TABLE, testSeed.transactions);
+  await chunkInsert(LIKE_TABLE, testSeed.likes);
+  await chunkInsert(COMMENT_TABLE, testSeed.comments);
+  await chunkInsert(NOTIFICATION_TABLE, testSeed.notifications);
+  await chunkInsert(BANK_TRANSFER_TABLE, testSeed.banktransfers);
 };
 
-export const getBy = (entity: keyof DbSchema, key: string, value: any) => {
-  const result = db
-    .get(entity)
-    // @ts-ignore
-    .find({ [`${key}`]: value })
-    .value();
-
-  return result;
+export const getAllUsers = async (): Promise<User[]> => {
+  const { data, error } = await supabase.from(USER_TABLE).select("*");
+  if (error) throw error;
+  return data as User[];
 };
 
-export const getAllByObj = (entity: keyof DbSchema, query: object) => {
-  const result = db
-    .get(entity)
-    // @ts-ignore
-    .filter(query)
-    .value();
+export const getAllPublicTransactions = async (): Promise<Transaction[]> => {
+  const { data, error } = await supabase
+    .from(TRANSACTION_TABLE)
+    .select("*")
+    .eq("privacyLevel", DefaultPrivacyLevel.public);
+  if (error) throw error;
+  return data as Transaction[];
+};
 
-  return result;
+export const getAllForEntity = async (entity: keyof DbSchema) => {
+  const { data, error } = await supabase.from(entity).select("*");
+  if (error) throw error;
+  return data;
+};
+
+export const getAllBy = async (entity: keyof DbSchema, key: string, value: any) => {
+  const { data, error } = await supabase.from(entity).select("*").eq(key, value);
+  if (error) throw error;
+  return data;
+};
+
+export const getBy = async (entity: keyof DbSchema, key: string, value: any) => {
+  const { data, error } = await supabase.from(entity).select("*").eq(key, value).limit(1).single();
+  if (error && error.code !== "PGRST116") throw error;
+  return data;
+};
+
+export const getAllByObj = async (entity: keyof DbSchema, query: Record<string, any>) => {
+  let q = supabase.from(entity).select("*");
+  for (const [key, value] of Object.entries(query)) {
+    q = q.eq(key, value);
+  }
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
 };
 
 // Search
 export const cleanSearchQuery = (query: string) => query.replace(/[^a-zA-Z0-9]/g, "");
 
-export const setupSearch = curry((items: object[], options: {}, query: string) => {
-  const fuse = new Fuse(items, options);
-  return fuse.search(query);
-});
+export const searchUsers = async (query: string): Promise<User[]> => {
+  const cleaned = cleanSearchQuery(query);
+  if (!cleaned) return [];
 
-export const performSearch = (items: object[], options: {}, query: string) =>
-  flow(
-    cleanSearchQuery,
-    setupSearch(items, options),
-    map((result) => result.item)
-  )(query);
-
-export const searchUsers = (query: string) => {
-  const items = getAllUsers();
-  return performSearch(
-    items,
-    {
-      keys: ["firstName", "lastName", "username", "email", "phoneNumber"],
-    },
-    query
-  ) as User[];
+  const pattern = `%${cleaned}%`;
+  const { data, error } = await supabase
+    .from(USER_TABLE)
+    .select("*")
+    .or(
+      `firstName.ilike.${pattern},lastName.ilike.${pattern},username.ilike.${pattern},email.ilike.${pattern},phoneNumber.ilike.${pattern}`
+    );
+  if (error) throw error;
+  return data as User[];
 };
 
 export const removeUserFromResults = (userId: User["id"], results: User[]) =>
@@ -170,12 +188,12 @@ export const removeUserFromResults = (userId: User["id"], results: User[]) =>
 // convenience methods
 
 // User
-export const getUserBy = (key: string, value: any) => getBy(USER_TABLE, key, value);
+export const getUserBy = async (key: string, value: any) => getBy(USER_TABLE, key, value);
 export const getUserId = (user: User): string => user.id;
-export const getUserById = (id: string) => getUserBy("id", id);
-export const getUserByUsername = (username: string) => getUserBy("username", username);
+export const getUserById = async (id: string) => getUserBy("id", id);
+export const getUserByUsername = async (username: string) => getUserBy("username", username);
 
-export const createUser = (userDetails: Partial<User>): User => {
+export const createUser = async (userDetails: Partial<User>): Promise<User> => {
   const password = bcrypt.hashSync(userDetails.password!, 10);
   const user: User = {
     id: shortid(),
@@ -193,44 +211,43 @@ export const createUser = (userDetails: Partial<User>): User => {
     modifiedAt: new Date(),
   };
 
-  saveUser(user);
+  throwIfError(await supabase.from(USER_TABLE).insert(user));
   return user;
 };
 
-const saveUser = (user: User) => {
-  db.get(USER_TABLE).push(user).write();
-};
-
-export const updateUserById = (userId: string, edits: Partial<User>) => {
-  const user = getUserById(userId);
-
-  db.get(USER_TABLE).find(user).assign(edits).write();
+export const updateUserById = async (userId: string, edits: Partial<User>) => {
+  throwIfError(
+    await supabase
+      .from(USER_TABLE)
+      .update({ ...edits, modifiedAt: new Date() })
+      .eq("id", userId)
+  );
 };
 
 // Contact
-export const getContactBy = (key: string, value: any) => getBy(CONTACT_TABLE, key, value);
+export const getContactBy = async (key: string, value: any) => getBy(CONTACT_TABLE, key, value);
 
-export const getContactsBy = (key: string, value: any) => getAllBy(CONTACT_TABLE, key, value);
+export const getContactsBy = async (key: string, value: any) => getAllBy(CONTACT_TABLE, key, value);
 
-export const getContactsByUsername = (username: string) =>
-  flow(getUserByUsername, getUserId, getContactsByUserId)(username);
+export const getContactsByUsername = async (username: string) => {
+  const user = await getUserByUsername(username);
+  if (!user) return [];
+  return getContactsByUserId(user.id);
+};
 
-export const getContactsByUserId = (userId: string): Contact[] => getContactsBy("userId", userId);
+export const getContactsByUserId = async (userId: string): Promise<Contact[]> =>
+  (await getContactsBy("userId", userId)) as Contact[];
 
-export const createContact = (contact: Contact) => {
-  db.get(CONTACT_TABLE).push(contact).write();
-
-  // manual lookup after create
+export const createContact = async (contact: Contact) => {
+  throwIfError(await supabase.from(CONTACT_TABLE).insert(contact));
   return getContactBy("id", contact.id);
 };
 
-export const removeContactById = (contactId: string) => {
-  const contact = getContactBy("id", contactId);
-
-  db.get(CONTACT_TABLE).remove(contact).write();
+export const removeContactById = async (contactId: string) => {
+  throwIfError(await supabase.from(CONTACT_TABLE).delete().eq("id", contactId));
 };
 
-export const createContactForUser = (userId: string, contactUserId: string) => {
+export const createContactForUser = async (userId: string, contactUserId: string) => {
   const contactId = shortid();
   const contact: Contact = {
     id: contactId,
@@ -241,28 +258,28 @@ export const createContactForUser = (userId: string, contactUserId: string) => {
     modifiedAt: new Date(),
   };
 
-  // Write contact record to the database
-  const result = createContact(contact);
-
+  const result = await createContact(contact);
   return result;
 };
 
 // Bank Account
-export const getBankAccountBy = (key: string, value: any) => getBy(BANK_ACCOUNT_TABLE, key, value);
+export const getBankAccountBy = async (key: string, value: any) =>
+  getBy(BANK_ACCOUNT_TABLE, key, value);
 
-export const getBankAccountById = (id: string) => getBankAccountBy("id", id);
+export const getBankAccountById = async (id: string) => getBankAccountBy("id", id);
 
-export const getBankAccountsBy = (key: string, value: any) =>
+export const getBankAccountsBy = async (key: string, value: any) =>
   getAllBy(BANK_ACCOUNT_TABLE, key, value);
 
-export const createBankAccount = (bankaccount: BankAccount) => {
-  db.get(BANK_ACCOUNT_TABLE).push(bankaccount).write();
-
-  // manual lookup after create
+export const createBankAccount = async (bankaccount: BankAccount) => {
+  throwIfError(await supabase.from(BANK_ACCOUNT_TABLE).insert(bankaccount));
   return getBankAccountBy("id", bankaccount.id);
 };
 
-export const createBankAccountForUser = (userId: string, accountDetails: Partial<BankAccount>) => {
+export const createBankAccountForUser = async (
+  userId: string,
+  accountDetails: Partial<BankAccount>
+) => {
   const accountId = shortid();
   const bankaccount: BankAccount = {
     id: accountId,
@@ -276,17 +293,17 @@ export const createBankAccountForUser = (userId: string, accountDetails: Partial
     modifiedAt: new Date(),
   };
 
-  // Write bank account record to the database
-  const result = createBankAccount(bankaccount);
-
+  const result = await createBankAccount(bankaccount);
   return result;
 };
 
-export const removeBankAccountById = (bankAccountId: string) => {
-  db.get(BANK_ACCOUNT_TABLE)
-    .find({ id: bankAccountId })
-    .assign({ isDeleted: true }) // soft delete
-    .write();
+export const removeBankAccountById = async (bankAccountId: string) => {
+  throwIfError(
+    await supabase
+      .from(BANK_ACCOUNT_TABLE)
+      .update({ isDeleted: true, modifiedAt: new Date() })
+      .eq("id", bankAccountId)
+  );
 };
 
 // Bank Transfer
@@ -294,16 +311,17 @@ export const removeBankAccountById = (bankAccountId: string) => {
 // but some of the backend database functionality is already implemented here.
 
 /* istanbul ignore next */
-export const getBankTransferBy = (key: string, value: any) =>
+export const getBankTransferBy = async (key: string, value: any) =>
   getBy(BANK_TRANSFER_TABLE, key, value);
 
-export const getBankTransfersBy = (key: string, value: any) =>
+export const getBankTransfersBy = async (key: string, value: any) =>
   getAllBy(BANK_TRANSFER_TABLE, key, value);
 
-export const getBankTransfersByUserId = (userId: string) => getBankTransfersBy("userId", userId);
+export const getBankTransfersByUserId = async (userId: string) =>
+  getBankTransfersBy("userId", userId);
 
 /* istanbul ignore next */
-export const createBankTransfer = (bankTransferDetails: BankTransferPayload) => {
+export const createBankTransfer = async (bankTransferDetails: BankTransferPayload) => {
   const bankTransfer: BankTransfer = {
     id: shortid(),
     uuid: v4(),
@@ -312,44 +330,46 @@ export const createBankTransfer = (bankTransferDetails: BankTransferPayload) => 
     modifiedAt: new Date(),
   };
 
-  const savedBankTransfer = saveBankTransfer(bankTransfer);
-  return savedBankTransfer;
-};
-
-/* istanbul ignore next */
-const saveBankTransfer = (bankTransfer: BankTransfer): BankTransfer => {
-  db.get(BANK_TRANSFER_TABLE).push(bankTransfer).write();
-
-  // manual lookup after banktransfer created
-  return getBankTransferBy("id", bankTransfer.id);
+  throwIfError(await supabase.from(BANK_TRANSFER_TABLE).insert(bankTransfer));
+  return (await getBankTransferBy("id", bankTransfer.id)) as BankTransfer;
 };
 
 // Transaction
 
-export const getTransactionBy = (key: string, value: any) => getBy(TRANSACTION_TABLE, key, value);
+export const getTransactionBy = async (key: string, value: any) =>
+  getBy(TRANSACTION_TABLE, key, value);
 
-export const getTransactionById = (id: string) => getTransactionBy("id", id);
+export const getTransactionById = async (id: string) =>
+  (await getTransactionBy("id", id)) as Transaction;
 
-export const getTransactionsByObj = (query: object) => getAllByObj(TRANSACTION_TABLE, query);
+export const getTransactionsByObj = async (query: Record<string, any>) =>
+  (await getAllByObj(TRANSACTION_TABLE, query)) as Transaction[];
 
-export const getTransactionByIdForApi = (id: string) =>
-  formatTransactionForApiResponse(getTransactionBy("id", id));
+export const getTransactionByIdForApi = async (id: string) => {
+  const transaction = await getTransactionBy("id", id);
+  return formatTransactionForApiResponse(transaction);
+};
 
-export const getTransactionsForUserForApi = (userId: string, query?: object) =>
-  flow(getTransactionsForUserByObj(userId), formatTransactionsForApiResponse)(query);
+export const getTransactionsForUserForApi = async (userId: string, query?: object) => {
+  const transactions = await getTransactionsForUserByObj(userId, query || {});
+  return await formatTransactionsForApiResponse(transactions);
+};
 
-export const getFullNameForUser = (userId: User["id"]) => flow(getUserById, formatFullName)(userId);
+export const getFullNameForUser = async (userId: User["id"]) => {
+  const user = await getUserById(userId);
+  return formatFullName(user);
+};
 
-export const formatTransactionForApiResponse = (
+export const formatTransactionForApiResponse = async (
   transaction: Transaction
-): TransactionResponseItem => {
-  const receiver = getUserById(transaction.receiverId);
-  const sender = getUserById(transaction.senderId);
+): Promise<TransactionResponseItem> => {
+  const receiver = await getUserById(transaction.receiverId);
+  const sender = await getUserById(transaction.senderId);
 
-  const receiverName = getFullNameForUser(transaction.receiverId);
-  const senderName = getFullNameForUser(transaction.senderId);
-  const likes = getLikesByTransactionId(transaction.id);
-  const comments = getCommentsByTransactionId(transaction.id);
+  const receiverName = await getFullNameForUser(transaction.receiverId);
+  const senderName = await getFullNameForUser(transaction.senderId);
+  const likes = await getLikesByTransactionId(transaction.id);
+  const comments = await getCommentsByTransactionId(transaction.id);
 
   return {
     receiverName,
@@ -362,172 +382,179 @@ export const formatTransactionForApiResponse = (
   };
 };
 
-export const formatTransactionsForApiResponse = (
+export const formatTransactionsForApiResponse = async (
   transactions: Transaction[]
-): TransactionResponseItem[] =>
-  orderBy(
-    [(transaction: Transaction) => new Date(transaction.modifiedAt)],
-    ["desc"],
+): Promise<TransactionResponseItem[]> => {
+  const formatted = await Promise.all(
     transactions.map((transaction) => formatTransactionForApiResponse(transaction))
   );
+  return orderBy(
+    [(transaction: TransactionResponseItem) => new Date(transaction.modifiedAt)],
+    ["desc"],
+    formatted
+  );
+};
 
-export const getAllTransactionsForUserByObj = curry((userId: string, query?: object) => {
-  const queryWithoutFilterFields = query && getQueryWithoutFilterFields(query);
+export const getAllTransactionsForUserByObj = async (
+  userId: string,
+  query?: object
+): Promise<Transaction[]> => {
+  const queryWithoutFilterFields =
+    query && Object.keys(query).length > 0 ? getQueryWithoutFilterFields(query) : undefined;
 
   const queryFields = queryWithoutFilterFields || query;
 
-  const userTransactions = flatMap(getTransactionsByObj)([
-    {
-      receiverId: userId,
-      ...queryFields,
-    },
-    {
-      senderId: userId,
-      ...queryFields,
-    },
+  const receiverQuery = { receiverId: userId, ...(queryFields || {}) };
+  const senderQuery = { senderId: userId, ...(queryFields || {}) };
+
+  const [receiverTxns, senderTxns] = await Promise.all([
+    getTransactionsByObj(receiverQuery),
+    getTransactionsByObj(senderQuery),
   ]);
+
+  let userTransactions = [...receiverTxns, ...senderTxns];
 
   if (query && (hasDateQueryFields(query) || hasAmountQueryFields(query))) {
     const { dateRangeStart, dateRangeEnd } = getDateQueryFields(query);
     const { amountMin, amountMax } = getAmountQueryFields(query);
 
-    return flow(
-      transactionsWithinDateRange(dateRangeStart!, dateRangeEnd!),
-      transactionsWithinAmountRange(amountMin!, amountMax!)
-    )(userTransactions);
-  }
-  return userTransactions;
-});
-
-export const transactionsWithinAmountRange = curry(
-  (amountMin: number, amountMax: number, transactions: Transaction[]) => {
-    if (!amountMin || !amountMax) {
-      return transactions;
-    }
-
-    return filter(
-      (transaction: Transaction) => inRange(amountMin, amountMax, transaction.amount),
-      transactions
-    );
-  }
-);
-
-export const transactionsWithinDateRange = curry(
-  (dateRangeStart: string, dateRangeEnd: string, transactions: Transaction[]) => {
-    if (!dateRangeStart || !dateRangeEnd) {
-      return transactions;
-    }
-
-    return filter(
-      (transaction: Transaction) =>
+    if (dateRangeStart && dateRangeEnd) {
+      userTransactions = userTransactions.filter((transaction) =>
         isWithinInterval(new Date(transaction.createdAt), {
           start: new Date(dateRangeStart),
           end: new Date(dateRangeEnd),
-        }),
-      transactions
-    );
+        })
+      );
+    }
+
+    if (amountMin && amountMax) {
+      userTransactions = userTransactions.filter(
+        (transaction) => transaction.amount >= amountMin && transaction.amount <= amountMax
+      );
+    }
   }
-);
 
-export const getTransactionsForUserByObj = curry((userId: string, query: object) =>
-  flow(getAllTransactionsForUserByObj(userId), uniqBy("id"))(query)
-);
+  return userTransactions;
+};
 
-export const getContactIdsForUser = (userId: string): Contact["id"][] =>
-  flow(getContactsByUserId, map("contactUserId"))(userId);
+export const getTransactionsForUserByObj = async (
+  userId: string,
+  query: object
+): Promise<Transaction[]> => {
+  const all = await getAllTransactionsForUserByObj(userId, query);
+  return uniqBy("id", all);
+};
 
-export const getTransactionsForUserContacts = (userId: string, query?: object) =>
-  uniqBy(
-    "id",
-    flatMap(
-      (contactId) => getTransactionsForUserForApi(contactId, query),
-      getContactIdsForUser(userId)
-    )
+export const getContactIdsForUser = async (userId: string): Promise<string[]> => {
+  const contacts = await getContactsByUserId(userId);
+  return map("contactUserId", contacts);
+};
+
+export const getTransactionsForUserContacts = async (
+  userId: string,
+  query?: object
+): Promise<TransactionResponseItem[]> => {
+  const contactIds = await getContactIdsForUser(userId);
+  const results = await Promise.all(
+    contactIds.map((contactId) => getTransactionsForUserForApi(contactId, query))
   );
+  return uniqBy("id", flatMap((x: TransactionResponseItem[]) => x, results));
+};
 
 export const getTransactionIds = (transactions: Transaction[]) => map("id", transactions);
 
-export const getContactsTransactionIds = (userId: string): Transaction["id"][] =>
-  flow(getTransactionsForUserContacts, getTransactionIds)(userId);
-
-export const nonContactPublicTransactions = (userId: string): Transaction[] => {
-  const contactsTransactionIds = getContactsTransactionIds(userId);
-  return flow(
-    getAllPublicTransactions,
-    reject((transaction: Transaction) => includes(transaction.id, contactsTransactionIds))
-  )();
+export const getContactsTransactionIds = async (userId: string): Promise<string[]> => {
+  const txns = await getTransactionsForUserContacts(userId);
+  return getTransactionIds(txns);
 };
 
-export const getNonContactPublicTransactionsForApi = (userId: string) =>
-  flow(nonContactPublicTransactions, formatTransactionsForApiResponse)(userId);
+export const nonContactPublicTransactions = async (userId: string): Promise<Transaction[]> => {
+  const contactsTransactionIds = await getContactsTransactionIds(userId);
+  const publicTxns = await getAllPublicTransactions();
+  return publicTxns.filter((transaction) => !contactsTransactionIds.includes(transaction.id));
+};
 
-export const getPublicTransactionsDefaultSort = (userId: string) => ({
-  contactsTransactions: getTransactionsForUserContacts(userId),
-  publicTransactions: getNonContactPublicTransactionsForApi(userId),
+export const getNonContactPublicTransactionsForApi = async (
+  userId: string
+): Promise<TransactionResponseItem[]> => {
+  const txns = await nonContactPublicTransactions(userId);
+  return formatTransactionsForApiResponse(txns);
+};
+
+export const getPublicTransactionsDefaultSort = async (userId: string) => ({
+  contactsTransactions: await getTransactionsForUserContacts(userId),
+  publicTransactions: await getNonContactPublicTransactionsForApi(userId),
 });
 
-export const getPublicTransactionsByQuery = (userId: string, query: TransactionQueryPayload) => {
+export const getPublicTransactionsByQuery = async (
+  userId: string,
+  query: TransactionQueryPayload
+) => {
   if (query && (hasDateQueryFields(query) || hasAmountQueryFields(query))) {
     const { dateRangeStart, dateRangeEnd } = getDateQueryFields(query);
     const { amountMin, amountMax } = getAmountQueryFields(query);
 
-    return {
-      contactsTransactions: getTransactionsForUserContacts(userId, query),
-      publicTransactions: flow(
-        transactionsWithinDateRange(dateRangeStart!, dateRangeEnd!),
-        transactionsWithinAmountRange(amountMin!, amountMax!)
-      )(getNonContactPublicTransactionsForApi(userId)),
-    };
+    const [contactsTransactions, nonContactPublic] = await Promise.all([
+      getTransactionsForUserContacts(userId, query),
+      getNonContactPublicTransactionsForApi(userId),
+    ]);
+
+    let filteredPublic = nonContactPublic as TransactionResponseItem[];
+
+    if (dateRangeStart && dateRangeEnd) {
+      filteredPublic = filteredPublic.filter((t) =>
+        isWithinInterval(new Date(t.createdAt), {
+          start: new Date(dateRangeStart),
+          end: new Date(dateRangeEnd),
+        })
+      );
+    }
+
+    if (amountMin && amountMax) {
+      filteredPublic = filteredPublic.filter(
+        (t) => t.amount >= amountMin && t.amount <= amountMax
+      );
+    }
+
+    return { contactsTransactions, publicTransactions: filteredPublic };
   } else {
     return {
-      contactsTransactions: getTransactionsForUserContacts(userId),
-      publicTransactions: getNonContactPublicTransactionsForApi(userId),
+      contactsTransactions: await getTransactionsForUserContacts(userId),
+      publicTransactions: await getNonContactPublicTransactionsForApi(userId),
     };
   }
 };
 
-export const resetPayAppBalance = constant(0);
-
-export const debitPayAppBalance = (user: User, transaction: Transaction) => {
+export const debitPayAppBalance = async (user: User, transaction: Transaction) => {
   if (hasSufficientFunds(user, transaction)) {
-    flow(getChargeAmount, savePayAppBalance(user))(user, transaction);
+    const newBalance = getChargeAmount(user, transaction);
+    await updateUserById(get("id", user), { balance: newBalance });
   } else {
     /* istanbul ignore next */
-    flow(
-      getTransferAmount(user),
-      createBankTransferWithdrawal(user, transaction),
-      resetPayAppBalance,
-      savePayAppBalance(user)
-    )(transaction);
-  }
-};
-
-export const creditPayAppBalance = (user: User, transaction: Transaction) =>
-  flow(getPayAppCreditedAmount, savePayAppBalance(user))(user, transaction);
-
-/* istanbul ignore next */
-export const createBankTransferWithdrawal = curry(
-  (sender: User, transaction: Transaction, transferAmount: number) =>
-    createBankTransfer({
-      userId: sender.id,
+    const transferAmount = getTransferAmount(user)(transaction);
+    await createBankTransfer({
+      userId: user.id,
       source: transaction.source,
       amount: transferAmount,
       transactionId: transaction.id,
       type: BankTransferType.withdrawal,
-    })
-);
+    });
+    await updateUserById(get("id", user), { balance: 0 });
+  }
+};
 
-export const savePayAppBalance = curry((sender: User, balance: number) =>
-  updateUserById(get("id", sender), { balance })
-);
+export const creditPayAppBalance = async (user: User, transaction: Transaction) => {
+  const newBalance = getPayAppCreditedAmount(user, transaction);
+  await updateUserById(get("id", user), { balance: newBalance });
+};
 
-export const createTransaction = (
+export const createTransaction = async (
   userId: User["id"],
   transactionType: "payment" | "request",
   transactionDetails: TransactionPayload
-): Transaction => {
-  const sender = getUserById(userId);
-  const receiver = getUserById(transactionDetails.receiverId);
+): Promise<Transaction> => {
+  const sender = await getUserById(userId);
+  const receiver = await getUserById(transactionDetails.receiverId);
   const transaction: Transaction = {
     id: shortid(),
     uuid: v4(),
@@ -543,22 +570,23 @@ export const createTransaction = (
     modifiedAt: new Date(),
   };
 
-  const savedTransaction = saveTransaction(transaction);
+  throwIfError(await supabase.from(TRANSACTION_TABLE).insert(transaction));
+  const savedTransaction = (await getTransactionBy("id", transaction.id)) as Transaction;
 
   // if payment, debit sender's balance for payment amount
   if (isPayment(transaction)) {
-    debitPayAppBalance(sender, transaction);
-    creditPayAppBalance(receiver, transaction);
-    updateTransactionById(transaction.id, {
+    await debitPayAppBalance(sender, transaction);
+    await creditPayAppBalance(receiver, transaction);
+    await updateTransactionById(transaction.id, {
       status: TransactionStatus.complete,
     });
-    createPaymentNotification(
+    await createPaymentNotification(
       transaction.receiverId,
       transaction.id,
       PaymentNotificationStatus.received
     );
   } else {
-    createPaymentNotification(
+    await createPaymentNotification(
       transaction.receiverId,
       transaction.id,
       PaymentNotificationStatus.requested
@@ -568,45 +596,49 @@ export const createTransaction = (
   return savedTransaction;
 };
 
-const saveTransaction = (transaction: Transaction): Transaction => {
-  db.get(TRANSACTION_TABLE).push(transaction).write();
-
-  // manual lookup after transaction created
-  return getTransactionBy("id", transaction.id);
-};
-
-export const updateTransactionById = (transactionId: string, edits: Partial<Transaction>) => {
-  const transaction = getTransactionBy("id", transactionId);
+export const updateTransactionById = async (
+  transactionId: string,
+  edits: Partial<Transaction>
+) => {
+  const transaction = (await getTransactionBy("id", transactionId)) as Transaction;
   const { senderId, receiverId } = transaction;
-  const sender = getUserById(senderId);
-  const receiver = getUserById(receiverId);
+  const sender = await getUserById(senderId);
+  const receiver = await getUserById(receiverId);
 
   // if payment, debit sender's balance for payment amount
   if (isRequestTransaction(transaction)) {
-    debitPayAppBalance(receiver, transaction);
-    creditPayAppBalance(sender, transaction);
+    await debitPayAppBalance(receiver, transaction);
+    await creditPayAppBalance(sender, transaction);
     edits.status = TransactionStatus.complete;
 
-    createPaymentNotification(
+    await createPaymentNotification(
       transaction.senderId,
       transaction.id,
       PaymentNotificationStatus.received
     );
   }
 
-  db.get(TRANSACTION_TABLE).find(transaction).assign(edits).write();
+  throwIfError(
+    await supabase
+      .from(TRANSACTION_TABLE)
+      .update({ ...edits, modifiedAt: new Date() })
+      .eq("id", transactionId)
+  );
 };
 
 // Likes
 
-export const getLikeBy = (key: string, value: any): Like => getBy(LIKE_TABLE, key, value);
-export const getLikesByObj = (query: object) => getAllByObj(LIKE_TABLE, query);
+export const getLikeBy = async (key: string, value: any): Promise<Like> =>
+  (await getBy(LIKE_TABLE, key, value)) as Like;
+export const getLikesByObj = async (query: Record<string, any>) =>
+  (await getAllByObj(LIKE_TABLE, query)) as Like[];
 
-export const getLikeById = (id: string): Like => getLikeBy("id", id);
-export const getLikesByTransactionId = (transactionId: string) => getLikesByObj({ transactionId });
+export const getLikeById = async (id: string): Promise<Like> => getLikeBy("id", id);
+export const getLikesByTransactionId = async (transactionId: string) =>
+  getLikesByObj({ transactionId });
 
-export const createLike = (userId: string, transactionId: string): Like => {
-  const like = {
+export const createLike = async (userId: string, transactionId: string): Promise<Like> => {
+  const like: Like = {
     id: shortid(),
     uuid: v4(),
     userId,
@@ -615,44 +647,44 @@ export const createLike = (userId: string, transactionId: string): Like => {
     modifiedAt: new Date(),
   };
 
-  const savedLike = saveLike(like);
-  return savedLike;
+  throwIfError(await supabase.from(LIKE_TABLE).insert(like));
+  return (await getLikeById(like.id)) as Like;
 };
 
-export const createLikes = (userId: string, transactionId: string) => {
-  const { senderId, receiverId } = getTransactionById(transactionId);
+export const createLikes = async (userId: string, transactionId: string) => {
+  const transaction = await getTransactionById(transactionId);
+  const { senderId, receiverId } = transaction;
 
-  const like = createLike(userId, transactionId);
+  const like = await createLike(userId, transactionId);
 
   /* istanbul ignore next */
   if (userId !== senderId || userId !== receiverId) {
-    createLikeNotification(senderId, transactionId, like.id);
-    createLikeNotification(receiverId, transactionId, like.id);
+    await createLikeNotification(senderId, transactionId, like.id);
+    await createLikeNotification(receiverId, transactionId, like.id);
   } else if (userId === senderId) {
-    createLikeNotification(senderId, transactionId, like.id);
+    await createLikeNotification(senderId, transactionId, like.id);
   } else {
-    createLikeNotification(receiverId, transactionId, like.id);
+    await createLikeNotification(receiverId, transactionId, like.id);
   }
-};
-
-const saveLike = (like: Like): Like => {
-  db.get(LIKE_TABLE).push(like).write();
-
-  // manual lookup after like created
-  return getLikeById(like.id);
 };
 
 // Comments
 
-export const getCommentBy = (key: string, value: any): Comment => getBy(COMMENT_TABLE, key, value);
-export const getCommentsByObj = (query: object) => getAllByObj(COMMENT_TABLE, query);
+export const getCommentBy = async (key: string, value: any): Promise<Comment> =>
+  (await getBy(COMMENT_TABLE, key, value)) as Comment;
+export const getCommentsByObj = async (query: Record<string, any>) =>
+  (await getAllByObj(COMMENT_TABLE, query)) as Comment[];
 
-export const getCommentById = (id: string): Comment => getCommentBy("id", id);
-export const getCommentsByTransactionId = (transactionId: string) =>
+export const getCommentById = async (id: string): Promise<Comment> => getCommentBy("id", id);
+export const getCommentsByTransactionId = async (transactionId: string) =>
   getCommentsByObj({ transactionId });
 
-export const createComment = (userId: string, transactionId: string, content: string): Comment => {
-  const comment = {
+export const createComment = async (
+  userId: string,
+  transactionId: string,
+  content: string
+): Promise<Comment> => {
+  const comment: Comment = {
     id: shortid(),
     uuid: v4(),
     content,
@@ -662,49 +694,45 @@ export const createComment = (userId: string, transactionId: string, content: st
     modifiedAt: new Date(),
   };
 
-  const savedComment = saveComment(comment);
-  return savedComment;
+  throwIfError(await supabase.from(COMMENT_TABLE).insert(comment));
+  return (await getCommentById(comment.id)) as Comment;
 };
 
-export const createComments = (userId: string, transactionId: string, content: string) => {
-  const { senderId, receiverId } = getTransactionById(transactionId);
+export const createComments = async (userId: string, transactionId: string, content: string) => {
+  const transaction = await getTransactionById(transactionId);
+  const { senderId, receiverId } = transaction;
 
-  const comment = createComment(userId, transactionId, content);
+  const comment = await createComment(userId, transactionId, content);
 
   /* istanbul ignore next */
   if (userId !== senderId || userId !== receiverId) {
-    createCommentNotification(senderId, transactionId, comment.id);
-    createCommentNotification(receiverId, transactionId, comment.id);
+    await createCommentNotification(senderId, transactionId, comment.id);
+    await createCommentNotification(receiverId, transactionId, comment.id);
   } else if (userId === senderId) {
-    createCommentNotification(senderId, transactionId, comment.id);
+    await createCommentNotification(senderId, transactionId, comment.id);
   } else {
-    createCommentNotification(receiverId, transactionId, comment.id);
+    await createCommentNotification(receiverId, transactionId, comment.id);
   }
-};
-
-const saveComment = (comment: Comment): Comment => {
-  db.get(COMMENT_TABLE).push(comment).write();
-
-  // manual lookup after comment created
-  return getCommentById(comment.id);
 };
 
 // Notifications
 
-export const getNotificationBy = (key: string, value: any): NotificationType =>
-  getBy(NOTIFICATION_TABLE, key, value);
+export const getNotificationBy = async (key: string, value: any): Promise<NotificationType> =>
+  (await getBy(NOTIFICATION_TABLE, key, value)) as NotificationType;
 
-export const getNotificationsByObj = (query: object): Notification[] =>
-  getAllByObj(NOTIFICATION_TABLE, query);
+export const getNotificationsByObj = async (query: Record<string, any>) =>
+  (await getAllByObj(NOTIFICATION_TABLE, query)) as NotificationType[];
 
-export const getUnreadNotificationsByUserId = (userId: string) =>
-  flow(getNotificationsByObj, formatNotificationsForApiResponse)({ userId, isRead: false });
+export const getUnreadNotificationsByUserId = async (userId: string) => {
+  const notifications = await getNotificationsByObj({ userId, isRead: false });
+  return formatNotificationsForApiResponse(notifications);
+};
 
-export const createPaymentNotification = (
+export const createPaymentNotification = async (
   userId: string,
   transactionId: string,
   status: PaymentNotificationStatus
-): PaymentNotification => {
+): Promise<PaymentNotification> => {
   const notification: PaymentNotification = {
     id: shortid(),
     uuid: v4(),
@@ -716,15 +744,15 @@ export const createPaymentNotification = (
     modifiedAt: new Date(),
   };
 
-  saveNotification(notification);
+  throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
   return notification;
 };
 
-export const createLikeNotification = (
+export const createLikeNotification = async (
   userId: string,
   transactionId: string,
   likeId: string
-): LikeNotification => {
+): Promise<LikeNotification> => {
   const notification: LikeNotification = {
     id: shortid(),
     uuid: v4(),
@@ -736,15 +764,15 @@ export const createLikeNotification = (
     modifiedAt: new Date(),
   };
 
-  saveNotification(notification);
+  throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
   return notification;
 };
 
-export const createCommentNotification = (
+export const createCommentNotification = async (
   userId: string,
   transactionId: string,
   commentId: string
-): CommentNotification => {
+): Promise<CommentNotification> => {
   const notification: CommentNotification = {
     id: shortid(),
     uuid: v4(),
@@ -756,56 +784,63 @@ export const createCommentNotification = (
     modifiedAt: new Date(),
   };
 
-  saveNotification(notification);
+  throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
   return notification;
 };
 
-const saveNotification = (notification: NotificationType) => {
-  db.get(NOTIFICATION_TABLE).push(notification).write();
-};
-
-export const createNotifications = (userId: string, notifications: NotificationPayloadType[]) =>
-  notifications.flatMap((item: NotificationPayloadType) => {
+export const createNotifications = async (
+  userId: string,
+  notifications: NotificationPayloadType[]
+) => {
+  const results = [];
+  for (const item of notifications) {
     if ("status" in item && item.type === NotificationsType.payment) {
-      return createPaymentNotification(userId, item.transactionId, item.status);
+      results.push(await createPaymentNotification(userId, item.transactionId, item.status));
     } else if ("likeId" in item && item.type === NotificationsType.like) {
-      return createLikeNotification(userId, item.transactionId, item.likeId);
+      results.push(await createLikeNotification(userId, item.transactionId, item.likeId));
     } else {
       /* istanbul ignore next */
       if ("commentId" in item) {
-        return createCommentNotification(userId, item.transactionId, item.commentId);
+        results.push(
+          await createCommentNotification(userId, item.transactionId, item.commentId)
+        );
       }
     }
-  });
+  }
+  return results;
+};
 
-export const updateNotificationById = (
+export const updateNotificationById = async (
   userId: string,
   notificationId: string,
   edits: Partial<NotificationType>
 ) => {
-  const notification = getNotificationBy("id", notificationId);
-
-  db.get(NOTIFICATION_TABLE).find(notification).assign(edits).write();
+  throwIfError(
+    await supabase
+      .from(NOTIFICATION_TABLE)
+      .update({ ...edits, modifiedAt: new Date() })
+      .eq("id", notificationId)
+  );
 };
 
-export const formatNotificationForApiResponse = (
+export const formatNotificationForApiResponse = async (
   notification: NotificationType
-): NotificationResponseItem => {
-  let userFullName = getFullNameForUser(notification.userId);
-  const transaction = getTransactionById(notification.transactionId);
+): Promise<NotificationResponseItem> => {
+  let userFullName = await getFullNameForUser(notification.userId);
+  const transaction = await getTransactionById(notification.transactionId);
 
   if (isRequestTransaction(transaction)) {
-    userFullName = getFullNameForUser(transaction.senderId);
+    userFullName = await getFullNameForUser(transaction.senderId);
   }
 
   if (isLikeNotification(notification)) {
-    const like = getLikeById(notification.likeId);
-    userFullName = getFullNameForUser(like.userId);
+    const like = await getLikeById(notification.likeId);
+    userFullName = await getFullNameForUser(like.userId);
   }
 
   if (isCommentNotification(notification)) {
-    const comment = getCommentById(notification.commentId);
-    userFullName = getFullNameForUser(comment.userId);
+    const comment = await getCommentById(notification.commentId);
+    userFullName = await getFullNameForUser(comment.userId);
   }
 
   return {
@@ -814,46 +849,60 @@ export const formatNotificationForApiResponse = (
   };
 };
 
-export const formatNotificationsForApiResponse = (
-  notifications: NotificationResponseItem[]
-): NotificationResponseItem[] =>
-  orderBy(
-    [(notification: NotificationResponseItem) => new Date(notification.modifiedAt)],
-    ["desc"],
+export const formatNotificationsForApiResponse = async (
+  notifications: NotificationType[]
+): Promise<NotificationResponseItem[]> => {
+  const formatted = await Promise.all(
     notifications.map((notification) => formatNotificationForApiResponse(notification))
   );
+  return orderBy(
+    [(notification: NotificationResponseItem) => new Date(notification.modifiedAt)],
+    ["desc"],
+    formatted
+  );
+};
 
 // dev/test private methods
 /* istanbul ignore next */
-export const getRandomUser = () => {
-  const users = getAllUsers();
+export const getRandomUser = async () => {
+  const users = await getAllUsers();
   return sample(users)!;
 };
 
 /* istanbul ignore next */
-export const getAllContacts = () => db.get(CONTACT_TABLE).value();
+export const getAllContacts = async () => {
+  const { data, error } = await supabase.from(CONTACT_TABLE).select("*");
+  if (error) throw error;
+  return data as Contact[];
+};
 
 /* istanbul ignore next */
-export const getAllTransactions = () => db.get(TRANSACTION_TABLE).value();
+export const getAllTransactions = async () => {
+  const { data, error } = await supabase.from(TRANSACTION_TABLE).select("*");
+  if (error) throw error;
+  return data as Transaction[];
+};
 
 /* istanbul ignore */
-export const getBankAccountsByUserId = (userId: string) => getBankAccountsBy("userId", userId);
+export const getBankAccountsByUserId = async (userId: string) =>
+  getBankAccountsBy("userId", userId);
 
 /* istanbul ignore next */
-export const getNotificationById = (id: string): NotificationType => getNotificationBy("id", id);
+export const getNotificationById = async (id: string): Promise<NotificationType> =>
+  getNotificationBy("id", id);
 
 /* istanbul ignore next */
-export const getNotificationsByUserId = (userId: string) => getNotificationsByObj({ userId });
+export const getNotificationsByUserId = async (userId: string) =>
+  getNotificationsByObj({ userId });
 
 /* istanbul ignore next */
-export const getBankTransferByTransactionId = (transactionId: string) =>
+export const getBankTransferByTransactionId = async (transactionId: string) =>
   getBankTransferBy("transactionId", transactionId);
 
 /* istanbul ignore next */
-export const getTransactionsBy = (key: string, value: string) =>
+export const getTransactionsBy = async (key: string, value: string) =>
   getAllBy(TRANSACTION_TABLE, key, value);
 
 /* istanbul ignore next */
-export const getTransactionsByUserId = (userId: string) => getTransactionsBy("receiverId", userId);
-
-export default db;
+export const getTransactionsByUserId = async (userId: string) =>
+  getTransactionsBy("receiverId", userId);
