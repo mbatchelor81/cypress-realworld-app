@@ -19,6 +19,7 @@ export const useNotificationWebSocket = ({
 }: UseWebSocketOptions) => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intentionalCloseRef = useRef(false);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
 
   const clearNewNotifications = useCallback(() => {
@@ -27,6 +28,14 @@ export const useNotificationWebSocket = ({
 
   const connect = useCallback(() => {
     if (!currentUserId) return;
+
+    intentionalCloseRef.current = false;
+
+    // Close any existing connection before opening a new one
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
 
     const wsUrl = `ws://localhost:${backendPort}`;
     const ws = new WebSocket(wsUrl);
@@ -48,10 +57,12 @@ export const useNotificationWebSocket = ({
     };
 
     ws.onclose = () => {
-      console.log("WebSocket disconnected, reconnecting in 3s...");
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connect();
-      }, 3000);
+      if (!intentionalCloseRef.current) {
+        console.log("WebSocket disconnected, reconnecting in 3s...");
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, 3000);
+      }
     };
 
     ws.onerror = (err) => {
@@ -66,6 +77,7 @@ export const useNotificationWebSocket = ({
     connect();
 
     return () => {
+      intentionalCloseRef.current = true;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
