@@ -27,6 +27,7 @@ import {
 } from "@mui/icons-material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 
+import { keyframes } from "@emotion/react";
 import { DataContext, DataEvents, DataSchema } from "../machines/dataMachine";
 import TransactionNavTabs from "./TransactionNavTabs";
 import RWALogo from "./SvgRwaLogo";
@@ -46,6 +47,21 @@ const classes = {
   newTransactionButton: `${PREFIX}-newTransactionButton`,
   customBadge: `${PREFIX}-customBadge`,
 };
+
+const pulse = keyframes`
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+  }
+`;
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   [`& .${classes.toolbar}`]: {
@@ -102,6 +118,16 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   },
 }));
 
+const PulsingBadge = styled(Badge)<{ pulsing?: string }>(({ pulsing }) =>
+  pulsing === "true"
+    ? {
+        "& .MuiBadge-badge": {
+          animation: `${pulse} 1.5s infinite`,
+        },
+      }
+    : {}
+);
+
 interface NavBarProps {
   drawerOpen: boolean;
   toggleDrawer: Function;
@@ -112,9 +138,17 @@ interface NavBarProps {
     any,
     ResolveTypegenMeta<TypegenDisabled, DataEvents, BaseActionObject, ServiceMap>
   >;
+  hasNewNotifications?: boolean;
+  clearNewNotifications?: () => void;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notificationsService }) => {
+const NavBar: React.FC<NavBarProps> = ({
+  drawerOpen,
+  toggleDrawer,
+  notificationsService,
+  hasNewNotifications,
+  clearNewNotifications,
+}) => {
   const match = useLocation();
 
   const theme = useTheme();
@@ -122,6 +156,12 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
 
   const allNotifications = notificationsState?.context?.results;
   const xsBreakpoint = useMediaQuery(theme.breakpoints.only("xs"));
+
+  const handleNotificationsClick = () => {
+    if (clearNewNotifications) {
+      clearNewNotifications();
+    }
+  };
 
   return (
     <StyledAppBar
@@ -176,14 +216,16 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
           to="/notifications"
           data-test="nav-top-notifications-link"
           size="large"
+          onClick={handleNotificationsClick}
         >
-          <Badge
+          <PulsingBadge
             badgeContent={allNotifications ? allNotifications.length : undefined}
             data-test="nav-top-notifications-count"
             classes={{ badge: classes.customBadge }}
+            pulsing={hasNewNotifications ? "true" : "false"}
           >
             <NotificationsIcon />
-          </Badge>
+          </PulsingBadge>
         </IconButton>
       </Toolbar>
       {(match.pathname === "/" || RegExp("/(?:public|contacts|personal)").test(match.pathname)) && (

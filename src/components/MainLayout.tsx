@@ -67,9 +67,17 @@ interface Props {
     any,
     ResolveTypegenMeta<TypegenDisabled, DataEvents, BaseActionObject, ServiceMap>
   >;
+  hasNewNotifications?: boolean;
+  clearNewNotifications?: () => void;
 }
 
-const MainLayout: React.FC<Props> = ({ children, notificationsService, authService }) => {
+const MainLayout: React.FC<Props> = ({
+  children,
+  notificationsService,
+  authService,
+  hasNewNotifications,
+  clearNewNotifications,
+}) => {
   const theme = useTheme();
   const [drawerState, sendDrawer] = useMachine(drawerMachine);
 
@@ -100,6 +108,8 @@ const MainLayout: React.FC<Props> = ({ children, notificationsService, authServi
         toggleDrawer={xsBreakpoint ? toggleMobileDrawer : toggleDesktopDrawer}
         drawerOpen={xsBreakpoint ? mobileDrawerOpen : desktopDrawerOpen}
         notificationsService={notificationsService}
+        hasNewNotifications={hasNewNotifications}
+        clearNewNotifications={clearNewNotifications}
       />
       <NavDrawer
         toggleDrawer={xsBreakpoint ? toggleMobileDrawer : toggleDesktopDrawer}

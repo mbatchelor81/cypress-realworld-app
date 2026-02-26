@@ -5,7 +5,9 @@ import {
   createNotifications,
   updateNotificationById,
   getUnreadNotificationsByUserId,
+  formatNotificationsForApiResponse,
 } from "./database";
+import { broadcastNotifications } from "./websocket";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import {
   isNotificationsBodyValidator,
@@ -34,6 +36,10 @@ router.post(
     const { items } = req.body;
     /* istanbul ignore next */
     const notifications = await createNotifications(req.user?.id!, items);
+
+    // Broadcast formatted notifications over WebSocket
+    const formatted = await formatNotificationsForApiResponse(notifications);
+    broadcastNotifications(req.user?.id!, formatted);
 
     res.status(200);
     // @ts-ignore

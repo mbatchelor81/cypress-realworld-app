@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import { join } from "path";
 import logger from "morgan";
 import passport from "passport";
@@ -11,6 +12,7 @@ import { loadSchemaSync } from "@graphql-tools/load";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
 // @ts-ignore
 import { addResolversToSchema } from "@graphql-tools/schema";
+import { setupWebSocket } from "./websocket";
 
 import auth from "./auth";
 import userRoutes from "./user-routes";
@@ -120,6 +122,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
+const server = http.createServer(app);
+setupWebSocket(server);
+
 getBackendPort().then((port) => {
-  app.listen(port);
+  server.listen(port);
 });

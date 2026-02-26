@@ -1,7 +1,13 @@
 ///<reference path="types.ts" />
 
 import express from "express";
-import { getLikesByTransactionId, createLikes } from "./database";
+import {
+  getLikesByTransactionId,
+  createLikes,
+  getTransactionById,
+  getUnreadNotificationsByUserId,
+} from "./database";
+import { broadcastNotifications } from "./websocket";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { shortIdValidation } from "./validators";
 const router = express.Router();
@@ -30,7 +36,17 @@ router.post(
   async (req, res) => {
     const { transactionId } = req.params;
     /* istanbul ignore next */
+    const transaction = await getTransactionById(transactionId);
     await createLikes(req.user?.id!, transactionId);
+
+    // Broadcast updated notifications to both sender and receiver
+    const { senderId, receiverId } = transaction;
+    const senderNotifications = await getUnreadNotificationsByUserId(senderId);
+    broadcastNotifications(senderId, senderNotifications);
+    if (receiverId !== senderId) {
+      const receiverNotifications = await getUnreadNotificationsByUserId(receiverId);
+      broadcastNotifications(receiverId, receiverNotifications);
+    }
 
     res.sendStatus(200);
   }

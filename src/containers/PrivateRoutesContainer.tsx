@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Switch } from "react-router";
 import {
   BaseActionObject,
@@ -20,6 +20,7 @@ import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../mac
 import { SnackbarContext, SnackbarSchema, SnackbarEvents } from "../machines/snackbarMachine";
 import { useActor } from "@xstate/react";
 import UserOnboardingContainer from "./UserOnboardingContainer";
+import { useNotificationWebSocket } from "../utils/useWebSocket";
 
 export interface Props {
   isLoggedIn: boolean;
@@ -54,14 +55,30 @@ const PrivateRoutesContainer: React.FC<Props> = ({
   snackbarService,
   bankAccountsService,
 }) => {
+  const [authState] = useActor(authService);
   const [, sendNotifications] = useActor(notificationsService);
+  const currentUserId = authState?.context?.user?.id;
+
+  const handleWebSocketNotification = useCallback(() => {
+    sendNotifications({ type: "FETCH" });
+  }, [sendNotifications]);
+
+  const { hasNewNotifications, clearNewNotifications } = useNotificationWebSocket({
+    currentUserId,
+    onNotification: handleWebSocketNotification,
+  });
 
   useEffect(() => {
     sendNotifications({ type: "FETCH" });
   }, [sendNotifications]);
 
   return (
-    <MainLayout notificationsService={notificationsService} authService={authService}>
+    <MainLayout
+      notificationsService={notificationsService}
+      authService={authService}
+      hasNewNotifications={hasNewNotifications}
+      clearNewNotifications={clearNewNotifications}
+    >
       <UserOnboardingContainer
         authService={authService}
         bankAccountsService={bankAccountsService}
