@@ -26,8 +26,14 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-const phoneRegExp =
-  /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/;
+// Split phone validation into two simple regexes to stay within SonarQube complexity limits (S5843)
+const phoneAllowedChars = /^[0-9+() -]+$/;
+const phoneMinDigits = /(\d.*){6,}/;
+
+function isValidPhoneNumber(value: string | undefined): boolean {
+  if (!value) return false;
+  return phoneAllowedChars.test(value) && phoneMinDigits.test(value);
+}
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
 
@@ -36,8 +42,8 @@ const validationSchema = object({
   lastName: string().required("Enter a last name"),
   email: string().email("Must contain a valid email address").required("Enter an email address"),
   phoneNumber: string()
-    .matches(phoneRegExp, "Phone number is not valid")
-    .required("Enter a phone number"),
+    .required("Enter a phone number")
+    .test("phone", "Phone number is not valid", isValidPhoneNumber),
   defaultPrivacyLevel: mixed<DefaultPrivacyLevel>().oneOf(DefaultPrivacyLevelValues),
 });
 
