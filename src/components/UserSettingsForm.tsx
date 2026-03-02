@@ -26,13 +26,14 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-// Split phone validation into two simple regexes to stay within SonarQube complexity limits (S5843)
+// Split phone validation into simple regexes to stay within SonarQube complexity limits (S5843)
 const phoneAllowedChars = /^[0-9+() -]+$/;
 const phoneMinDigits = /(\d.*){6,}/;
+const phoneEndsWithDigit = /\d$/;
 
 function isValidPhoneNumber(value: string | undefined): boolean {
   if (!value) return false;
-  return phoneAllowedChars.test(value) && phoneMinDigits.test(value);
+  return phoneAllowedChars.test(value) && phoneMinDigits.test(value) && phoneEndsWithDigit.test(value);
 }
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
