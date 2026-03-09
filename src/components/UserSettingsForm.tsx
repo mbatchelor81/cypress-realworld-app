@@ -26,8 +26,16 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-const phoneRegExp =
-  /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/;
+const phoneAllowedCharsRegex = /^[+\d\s()-]+$/;
+const phoneEndsWithDigitRegex = /\d$/;
+
+const isValidPhoneNumber = (phone: string | undefined): boolean => {
+  if (!phone) return true; // Let .required() handle empty values
+  if (!phoneAllowedCharsRegex.test(phone)) return false;
+  if (!phoneEndsWithDigitRegex.test(phone)) return false;
+  const digitCount = phone.replace(/\D/g, "").length;
+  return digitCount >= 6 && digitCount <= 15;
+};
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
 
@@ -36,7 +44,7 @@ const validationSchema = object({
   lastName: string().required("Enter a last name"),
   email: string().email("Must contain a valid email address").required("Enter an email address"),
   phoneNumber: string()
-    .matches(phoneRegExp, "Phone number is not valid")
+    .test("phone", "Phone number is not valid", isValidPhoneNumber)
     .required("Enter a phone number"),
   defaultPrivacyLevel: mixed<DefaultPrivacyLevel>().oneOf(DefaultPrivacyLevelValues),
 });
