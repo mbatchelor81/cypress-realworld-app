@@ -1,7 +1,0 @@
-name: 'Handle Comment Workflow'
-on:
-  workflow_dispatch:  # Disabled — was issue_comment trigger, changed to manual-only
-jobs:
-  closed-issue-comment:
-    uses: cypress-io/cypress/.github/workflows/triage_handle_new_comments.yml@develop
-    secrets: inherit

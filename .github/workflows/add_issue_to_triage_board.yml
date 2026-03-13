@@ -1,7 +1,0 @@
-name: 'Add issue/PR to Triage Board'
-on:
-  workflow_dispatch:  # Disabled — was issues/pull_request_target trigger, changed to manual-only
-jobs:
-  add-to-triage-project-board:
-    uses: cypress-io/cypress/.github/workflows/triage_add_to_project.yml@develop
-    secrets: inherit
