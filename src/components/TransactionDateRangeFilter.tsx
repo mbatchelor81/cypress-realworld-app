@@ -174,7 +174,6 @@ export function RangeCalendar({
   const [value, setValue] = useState<Value>(defaultValue);
 
   const width = xsBreakpoint ? window.innerWidth : 350;
-  const height = xsBreakpoint ? window.innerHeight : 300;
 
   const handleChange = (val: Value, _: any) => {
     setValue(val);
