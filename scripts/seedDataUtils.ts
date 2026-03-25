@@ -484,13 +484,13 @@ export const createSeedNotifications = (
       const commentTransaction = sample(
         compact(getRandomTransactions(5, transactionsWithComments))
       );
-            const comment = getCommentByTransactionId(commentTransaction!.id, seedComments);
-            // comment notification
-            const commentNotification = createFakeCommentNotification(
-              user.id,
-              commentTransaction!.id,
-              comment.id
-            );
+      const comment = getCommentByTransactionId(commentTransaction!.id, seedComments);
+      // comment notification
+      const commentNotification = createFakeCommentNotification(
+        user.id,
+        commentTransaction!.id,
+        comment.id
+      );
 
       // choose random transactions
       const randomTransactions = getRandomTransactions(notificationsPerUser - 2, transactions);
