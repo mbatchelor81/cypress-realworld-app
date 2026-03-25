@@ -26,7 +26,7 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-const phoneRegExp = /^\+?[\d\s\-()]{7,20}$/;
+const phoneRegExp = /^\+?(?=(?:\D*\d){7})[\d\s\-()]{7,20}$/;
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
 
