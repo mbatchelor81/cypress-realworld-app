@@ -175,11 +175,11 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.token);
+              localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME, event.token);
 
-        return Promise.resolve({ user });
-      },
-      getUserProfile: async (ctx, event) => {
+              return Promise.resolve({ user });
+            },
+            getUserProfile: async (ctx, event) => {
         const resp = await httpClient.get(`http://localhost:${backendPort}/checkAuth`);
         return resp.data;
       },
@@ -194,11 +194,11 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Google Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.token);
+              localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME, event.token);
 
-        return Promise.resolve({ user });
-      },
-      getAuth0UserProfile: /* istanbul ignore next */ (ctx, event: any) => {
+              return Promise.resolve({ user });
+            },
+            getAuth0UserProfile: /* istanbul ignore next */ (ctx, event: any) => {
         // Map Auth0 User fields to our User Model
         const user = {
           id: event.user.sub,
@@ -208,11 +208,11 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Auth0 Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.token);
+              localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME, event.token);
 
-        return Promise.resolve({ user });
-      },
-      updateProfile: async (ctx, event: any) => {
+              return Promise.resolve({ user });
+            },
+            updateProfile: async (ctx, event: any) => {
         const payload = omit("type", event);
         const resp = await httpClient.patch(
           `http://localhost:${backendPort}/users/${payload.id}`,
@@ -232,7 +232,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.accessTokenJwtString);
+        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME, event.accessTokenJwtString);
 
         return Promise.resolve(ourUser);
       },
