@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Switch } from "react-router";
 import {
   BaseActionObject,
@@ -20,6 +20,7 @@ import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../mac
 import { SnackbarContext, SnackbarSchema, SnackbarEvents } from "../machines/snackbarMachine";
 import { useActor } from "@xstate/react";
 import UserOnboardingContainer from "./UserOnboardingContainer";
+import { useNotificationsSubscription } from "../hooks/useNotificationsSubscription";
 
 export interface Props {
   isLoggedIn: boolean;
@@ -56,9 +57,15 @@ const PrivateRoutesContainer: React.FC<Props> = ({
 }) => {
   const [, sendNotifications] = useActor(notificationsService);
 
-  useEffect(() => {
+  const refreshNotifications = useCallback(() => {
     sendNotifications({ type: "FETCH" });
   }, [sendNotifications]);
+
+  useEffect(() => {
+    refreshNotifications();
+  }, [refreshNotifications]);
+
+  useNotificationsSubscription(refreshNotifications);
 
   return (
     <MainLayout notificationsService={notificationsService} authService={authService}>
