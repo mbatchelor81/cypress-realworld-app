@@ -109,6 +109,11 @@ export const useNotificationsSubscription = (onUpdate: () => void): void => {
       };
 
       const handleDisconnect = () => {
+        // A WebSocket "error" is always followed by "close"; detach both handlers
+        // so the follow-up event doesn't schedule a second reconnect (which would
+        // leak the first timer and open duplicate sockets).
+        nextSocket.onerror = null;
+        nextSocket.onclose = null;
         if (socket === nextSocket) {
           socket = null;
         }
