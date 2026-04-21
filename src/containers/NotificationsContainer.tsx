@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { styled } from "@mui/material/styles";
 import {
   BaseActionObject,
@@ -13,6 +13,9 @@ import { NotificationUpdatePayload } from "../models";
 import NotificationList from "../components/NotificationList";
 import { DataContext, DataSchema, DataEvents } from "../machines/dataMachine";
 import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../machines/authMachine";
+import { NotificationSocketMessage, useNotificationSocket } from "../utils/notificationSocket";
+
+const NOTIFICATIONS_POLL_INTERVAL_MS = 10_000;
 
 const PREFIX = "NotificationsContainer";
 
@@ -45,9 +48,47 @@ const NotificationsContainer: React.FC<Props> = ({ authService, notificationsSer
   const [authState] = useActor(authService);
   const [notificationsState, sendNotifications] = useActor(notificationsService);
 
+  const isAuthorized = authState.matches("authorized");
+
   useEffect(() => {
     sendNotifications({ type: "FETCH" });
   }, [authState, sendNotifications]);
+
+  const handleSocketMessage = useCallback(
+    (msg: NotificationSocketMessage) => {
+      if (msg.type === "notification.created" || msg.type === "notification.updated") {
+        sendNotifications({ type: "FETCH" });
+      }
+    },
+    [sendNotifications]
+  );
+
+  const socketStatus = useNotificationSocket({
+    enabled: isAuthorized,
+    onMessage: handleSocketMessage,
+  });
+
+  // Polling fallback: only poll while the WebSocket is not open.
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+    if (!isAuthorized) return;
+    if (socketStatus === "open") return;
+
+    pollTimerRef.current = setInterval(() => {
+      sendNotifications({ type: "FETCH" });
+    }, NOTIFICATIONS_POLL_INTERVAL_MS);
+
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [isAuthorized, socketStatus, sendNotifications]);
 
   const updateNotification = (payload: NotificationUpdatePayload) =>
     sendNotifications({ type: "UPDATE", ...payload });

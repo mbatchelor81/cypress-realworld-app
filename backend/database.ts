@@ -1,14 +1,6 @@
 import bcrypt from "bcryptjs";
 import { v4 } from "uuid";
-import {
-  uniqBy,
-  map,
-  sample,
-  orderBy,
-  flatMap,
-  get,
-  remove,
-} from "lodash/fp";
+import { uniqBy, map, sample, orderBy, flatMap, get, remove } from "lodash/fp";
 import { isWithinInterval } from "date-fns";
 import shortid from "shortid";
 import {
@@ -54,6 +46,7 @@ import {
 } from "../src/utils/transactionUtils";
 import { DbSchema } from "../src/models/db-schema";
 import { supabase } from "./supabase-client";
+import { broadcastNotificationCreated, broadcastNotificationUpdated } from "./notification-ws";
 import { buildDatabase } from "../scripts/seedDataUtils";
 
 export type TDatabase = {
@@ -458,7 +451,10 @@ export const getTransactionsForUserContacts = async (
   const results = await Promise.all(
     contactIds.map((contactId) => getTransactionsForUserForApi(contactId, query))
   );
-  return uniqBy("id", flatMap((x: TransactionResponseItem[]) => x, results));
+  return uniqBy(
+    "id",
+    flatMap((x: TransactionResponseItem[]) => x, results)
+  );
 };
 
 export const getTransactionIds = (transactions: Transaction[]) => map("id", transactions);
@@ -511,9 +507,7 @@ export const getPublicTransactionsByQuery = async (
     }
 
     if (amountMin && amountMax) {
-      filteredPublic = filteredPublic.filter(
-        (t) => t.amount >= amountMin && t.amount <= amountMax
-      );
+      filteredPublic = filteredPublic.filter((t) => t.amount >= amountMin && t.amount <= amountMax);
     }
 
     return { contactsTransactions, publicTransactions: filteredPublic };
@@ -596,10 +590,7 @@ export const createTransaction = async (
   return savedTransaction;
 };
 
-export const updateTransactionById = async (
-  transactionId: string,
-  edits: Partial<Transaction>
-) => {
+export const updateTransactionById = async (transactionId: string, edits: Partial<Transaction>) => {
   const transaction = (await getTransactionBy("id", transactionId)) as Transaction;
   const { senderId, receiverId } = transaction;
   const sender = await getUserById(senderId);
@@ -728,6 +719,28 @@ export const getUnreadNotificationsByUserId = async (userId: string) => {
   return formatNotificationsForApiResponse(notifications);
 };
 
+/* istanbul ignore next */
+const publishNotificationCreated = async (notification: NotificationType) => {
+  try {
+    const formatted = await formatNotificationForApiResponse(notification);
+    broadcastNotificationCreated(formatted);
+  } catch (err) {
+    console.error("[notifications] failed to broadcast created notification", err);
+  }
+};
+
+/* istanbul ignore next */
+const publishNotificationUpdated = async (notificationId: string) => {
+  try {
+    const notification = await getNotificationBy("id", notificationId);
+    if (!notification) return;
+    const formatted = await formatNotificationForApiResponse(notification);
+    broadcastNotificationUpdated(formatted);
+  } catch (err) {
+    console.error("[notifications] failed to broadcast updated notification", err);
+  }
+};
+
 export const createPaymentNotification = async (
   userId: string,
   transactionId: string,
@@ -745,6 +758,7 @@ export const createPaymentNotification = async (
   };
 
   throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
+  await publishNotificationCreated(notification);
   return notification;
 };
 
@@ -765,6 +779,7 @@ export const createLikeNotification = async (
   };
 
   throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
+  await publishNotificationCreated(notification);
   return notification;
 };
 
@@ -785,6 +800,7 @@ export const createCommentNotification = async (
   };
 
   throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
+  await publishNotificationCreated(notification);
   return notification;
 };
 
@@ -801,9 +817,7 @@ export const createNotifications = async (
     } else {
       /* istanbul ignore next */
       if ("commentId" in item) {
-        results.push(
-          await createCommentNotification(userId, item.transactionId, item.commentId)
-        );
+        results.push(await createCommentNotification(userId, item.transactionId, item.commentId));
       }
     }
   }
@@ -821,6 +835,7 @@ export const updateNotificationById = async (
       .update({ ...edits, modifiedAt: new Date() })
       .eq("id", notificationId)
   );
+  await publishNotificationUpdated(notificationId);
 };
 
 export const formatNotificationForApiResponse = async (
@@ -892,8 +907,7 @@ export const getNotificationById = async (id: string): Promise<NotificationType>
   getNotificationBy("id", id);
 
 /* istanbul ignore next */
-export const getNotificationsByUserId = async (userId: string) =>
-  getNotificationsByObj({ userId });
+export const getNotificationsByUserId = async (userId: string) => getNotificationsByObj({ userId });
 
 /* istanbul ignore next */
 export const getBankTransferByTransactionId = async (transactionId: string) =>
