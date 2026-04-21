@@ -13,8 +13,10 @@ type ServerMessage =
 
 const buildWebSocketUrl = (): string | null => {
   if (typeof window === "undefined" || !backendPort) return null;
+  // Match the rest of the codebase, which targets localhost so that the
+  // Express session cookie (scoped to localhost) is sent on the upgrade.
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.hostname}:${backendPort}${NOTIFICATIONS_WS_PATH}`;
+  return `${protocol}//localhost:${backendPort}${NOTIFICATIONS_WS_PATH}`;
 };
 
 /**
