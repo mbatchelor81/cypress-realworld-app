@@ -33,9 +33,9 @@ router.post(
     const { content } = req.body;
 
     /* istanbul ignore next */
-    await createComments(req.user?.id!, transactionId, content);
+    const comment = await createComments(req.user?.id!, transactionId, content);
 
-    emitCommentCreated(req.user?.id!, transactionId, req.user?.id!);
+    emitCommentCreated(comment.id, transactionId, req.user?.id!);
 
     res.sendStatus(200);
   }

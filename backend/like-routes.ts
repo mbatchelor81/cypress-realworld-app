@@ -31,9 +31,9 @@ router.post(
   async (req, res) => {
     const { transactionId } = req.params;
     /* istanbul ignore next */
-    await createLikes(req.user?.id!, transactionId);
+    const like = await createLikes(req.user?.id!, transactionId);
 
-    emitLikeCreated(req.user?.id!, transactionId, req.user?.id!);
+    emitLikeCreated(like.id, transactionId, req.user?.id!);
 
     res.sendStatus(200);
   }

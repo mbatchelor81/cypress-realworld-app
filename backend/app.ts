@@ -31,6 +31,8 @@ import { initWebSocketServer } from "./websocket-server";
 
 require("dotenv").config();
 
+const sessionSecret = process.env.SESSION_SECRET || "session secret";
+
 const corsOption = {
   origin: `http://localhost:${frontendPort}`,
   credentials: true,
@@ -60,7 +62,7 @@ app.use(bodyParser.json());
 
 app.use(
   session({
-    secret: "session secret",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     unset: "destroy",
@@ -123,7 +125,7 @@ app.use("/bankTransfers", bankTransferRoutes);
 app.use(express.static(join(__dirname, "../public")));
 
 const httpServer = createServer(app);
-initWebSocketServer(httpServer);
+initWebSocketServer(httpServer, sessionSecret);
 
 getBackendPort().then((port) => {
   httpServer.listen(port);

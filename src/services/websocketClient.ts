@@ -12,6 +12,7 @@ export interface WebSocketServerMessage {
   type: WebSocketEventType;
   payload: Record<string, string | undefined>;
   timestamp: string;
+  topic: string;
 }
 
 type MessageHandler = (message: WebSocketServerMessage) => void;
@@ -58,7 +59,9 @@ const handleMessage = (event: MessageEvent): void => {
   }
 
   subscriptions.forEach((sub) => {
-    sub.handler(message);
+    if (sub.topic === message.topic) {
+      sub.handler(message);
+    }
   });
 };
 
