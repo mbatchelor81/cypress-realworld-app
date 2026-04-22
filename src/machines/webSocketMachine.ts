@@ -42,6 +42,13 @@ export const webSocketMachine = Machine<WebSocketContext, WebSocketSchema, WebSo
       url: "",
       hasNewNotifications: false,
     },
+    on: {
+      CLEAR_NEW_NOTIFICATIONS: {
+        actions: assign<WebSocketContext, WebSocketEvents>({
+          hasNewNotifications: () => false,
+        }),
+      },
+    },
     states: {
       idle: {
         on: {
@@ -110,11 +117,6 @@ export const webSocketMachine = Machine<WebSocketContext, WebSocketSchema, WebSo
                     event.type === "WS_MESSAGE" && isNotificationCreated(event.data)
                       ? true
                       : ctx.hasNewNotifications,
-                }),
-              },
-              CLEAR_NEW_NOTIFICATIONS: {
-                actions: assign<WebSocketContext, WebSocketEvents>({
-                  hasNewNotifications: () => false,
                 }),
               },
             },

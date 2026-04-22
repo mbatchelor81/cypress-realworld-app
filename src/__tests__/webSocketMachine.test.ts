@@ -152,6 +152,29 @@ describe("webSocketMachine", () => {
     service.stop();
   }, 10000);
 
+  it("should clear hasNewNotifications in disconnected state", async () => {
+    const service = interpret(webSocketMachine).start();
+    service.send({ type: "CONNECT", url: "ws://localhost:3001/ws" });
+
+    await delay(50);
+    mockInstances[0].simulateOpen();
+
+    await delay(50);
+    mockInstances[0].simulateMessage({ type: "NOTIFICATION_CREATED" });
+
+    await delay(50);
+    expect(service.state.context.hasNewNotifications).toBe(true);
+    mockInstances[0].simulateClose();
+
+    await delay(50);
+    expect(service.state.matches("disconnected")).toBe(true);
+    expect(service.state.context.hasNewNotifications).toBe(true);
+
+    service.send({ type: "CLEAR_NEW_NOTIFICATIONS" });
+    expect(service.state.context.hasNewNotifications).toBe(false);
+    service.stop();
+  });
+
   it("should return to idle on DISCONNECT", async () => {
     const service = interpret(webSocketMachine).start();
     service.send({ type: "CONNECT", url: "ws://localhost:3001/ws" });

@@ -20,6 +20,10 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
   const wss = new WebSocketServer({ noServer: true });
 
   server.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+    if (request.url !== "/ws") {
+      return;
+    }
+
     const sessionRequest = request as SessionRequest;
     const fakeResponse = {} as Response;
 
