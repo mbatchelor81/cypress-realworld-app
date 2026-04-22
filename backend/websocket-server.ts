@@ -1,3 +1,4 @@
+import { ServerResponse } from "http";
 import type { IncomingMessage, Server as HTTPServer } from "http";
 import type { Duplex } from "stream";
 import type { RequestHandler, Response } from "express";
@@ -27,7 +28,7 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
 
   server.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
     const sessionRequest = request as SessionRequest;
-    const fakeResponse = {} as Response;
+    const fakeResponse = new ServerResponse(sessionRequest) as unknown as Response;
 
     sessionMiddleware(sessionRequest as unknown as Parameters<RequestHandler>[0], fakeResponse, (err?: unknown) => {
       if (err) {
