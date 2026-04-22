@@ -7,6 +7,7 @@ import {
   WebSocketServerMessage,
   WebSocketClientMessage,
 } from "./websocket-types";
+import { getTransactionById } from "./database";
 
 interface AuthenticatedWebSocket extends WebSocket {
   isAlive: boolean;
@@ -111,7 +112,22 @@ export const initWebSocketServer = (
         if (message.topic.includes(":")) {
           const [prefix, suffix] = message.topic.split(":");
           const userScopedPrefixes = ["transactions", "notifications"];
-          if (userScopedPrefixes.includes(prefix) && suffix !== client.userId) {
+          if (userScopedPrefixes.includes(prefix)) {
+            if (suffix !== client.userId) {
+              return;
+            }
+          } else if (prefix === "transaction") {
+            getTransactionById(suffix)
+              .then((transaction) => {
+                if (
+                  transaction &&
+                  (transaction.senderId === client.userId ||
+                    transaction.receiverId === client.userId)
+                ) {
+                  client.subscribedTopics.add(message.topic);
+                }
+              })
+              .catch(() => {});
             return;
           }
         }
