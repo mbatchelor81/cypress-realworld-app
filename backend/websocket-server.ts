@@ -108,10 +108,10 @@ export const initWebSocketServer = (
       }
 
       if (message.action === WebSocketClientAction.SUBSCRIBE) {
-        const isPrivateTopic = message.topic.includes(":");
-        if (isPrivateTopic) {
-          const topicUserId = message.topic.split(":")[1];
-          if (topicUserId && topicUserId !== client.userId) {
+        if (message.topic.includes(":")) {
+          const [prefix, suffix] = message.topic.split(":");
+          const userScopedPrefixes = ["transactions", "notifications"];
+          if (userScopedPrefixes.includes(prefix) && suffix !== client.userId) {
             return;
           }
         }
