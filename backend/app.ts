@@ -60,14 +60,13 @@ app.use(logger("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(
-  session({
-    secret: sessionSecret,
-    resave: false,
-    saveUninitialized: false,
-    unset: "destroy",
-  })
-);
+const sessionMiddleware = session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  unset: "destroy",
+});
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -125,7 +124,7 @@ app.use("/bankTransfers", bankTransferRoutes);
 app.use(express.static(join(__dirname, "../public")));
 
 const httpServer = createServer(app);
-initWebSocketServer(httpServer, sessionSecret);
+initWebSocketServer(httpServer, sessionMiddleware);
 
 getBackendPort().then((port) => {
   httpServer.listen(port);

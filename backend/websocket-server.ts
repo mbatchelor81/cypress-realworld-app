@@ -1,7 +1,6 @@
-import { Server as HttpServer, IncomingMessage } from "http";
+import { Server as HttpServer, IncomingMessage, ServerResponse } from "http";
 import WebSocket, { WebSocketServer } from "ws";
-import cookie from "cookie";
-import signature from "cookie-signature";
+import { RequestHandler } from "express";
 import {
   WebSocketEventType,
   WebSocketClientAction,
@@ -15,11 +14,15 @@ interface AuthenticatedWebSocket extends WebSocket {
   subscribedTopics: Set<string>;
 }
 
+interface SessionRequest extends IncomingMessage {
+  session?: { passport?: { user?: string } };
+  _resolvedUserId?: string;
+}
+
 const HEARTBEAT_INTERVAL_MS = 30000;
 
 let wss: WebSocketServer | null = null;
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
-let configuredSecret = "";
 
 const parseClientMessage = (data: string): WebSocketClientMessage | null => {
   try {
@@ -42,26 +45,24 @@ const parseClientMessage = (data: string): WebSocketClientMessage | null => {
   }
 };
 
-const extractSessionId = (req: IncomingMessage): string | null => {
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return null;
-
-  const cookies = cookie.parse(cookieHeader);
-  const signedCookie = cookies["connect.sid"];
-  if (!signedCookie) return null;
-
-  const rawValue = signedCookie.startsWith("s:")
-    ? signedCookie.slice(2)
-    : signedCookie;
-
-  const result = signature.unsign(rawValue, configuredSecret);
-  if (result === false) return null;
-
-  return result;
+const resolveUserId = (
+  sessionMiddleware: RequestHandler,
+  req: IncomingMessage
+): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const res = new ServerResponse(req);
+    sessionMiddleware(req as Parameters<RequestHandler>[0], res as Parameters<RequestHandler>[1], () => {
+      const sessionReq = req as SessionRequest;
+      const userId = sessionReq.session?.passport?.user ?? null;
+      resolve(userId);
+    });
+  });
 };
 
-export const initWebSocketServer = (server: HttpServer, secret: string): WebSocketServer => {
-  configuredSecret = secret;
+export const initWebSocketServer = (
+  server: HttpServer,
+  sessionMiddleware: RequestHandler
+): WebSocketServer => {
   wss = new WebSocketServer({ noServer: true });
 
   server.on("upgrade", (req, socket, head) => {
@@ -71,28 +72,30 @@ export const initWebSocketServer = (server: HttpServer, secret: string): WebSock
       return;
     }
 
-    const sid = extractSessionId(req);
-    if (!sid) {
-      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-      socket.destroy();
-      return;
-    }
+    resolveUserId(sessionMiddleware, req)
+      .then((userId) => {
+        if (!userId) {
+          socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+          socket.destroy();
+          return;
+        }
 
-    wss!.handleUpgrade(req, socket, head, (ws) => {
-      wss!.emit("connection", ws, req);
-    });
+        const sessionReq = req as SessionRequest;
+        sessionReq._resolvedUserId = userId;
+        wss!.handleUpgrade(req, socket, head, (ws) => {
+          wss!.emit("connection", ws, req);
+        });
+      })
+      .catch(() => {
+        socket.destroy();
+      });
   });
 
   wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
     const client = ws as AuthenticatedWebSocket;
     client.isAlive = true;
     client.subscribedTopics = new Set();
-
-    const cookies = cookie.parse(req.headers.cookie || "");
-    const signedCookie = cookies["connect.sid"] || "";
-    const rawValue = signedCookie.startsWith("s:") ? signedCookie.slice(2) : signedCookie;
-    const sid = signature.unsign(rawValue, configuredSecret);
-    client.userId = typeof sid === "string" ? sid : "";
+    client.userId = (req as SessionRequest & { _resolvedUserId?: string })._resolvedUserId || "";
 
     client.on("pong", () => {
       client.isAlive = true;
