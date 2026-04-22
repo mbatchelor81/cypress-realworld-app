@@ -177,7 +177,8 @@ export const broadcastToAll = (message: WebSocketServerMessage): void => {
 export const emitTransactionCreated = (
   transactionId: string,
   senderId: string,
-  receiverId: string
+  receiverId: string,
+  privacyLevel: string
 ): void => {
   const message: WebSocketServerMessage = {
     type: WebSocketEventType.TRANSACTION_CREATED,
@@ -185,13 +186,17 @@ export const emitTransactionCreated = (
     timestamp: new Date().toISOString(),
   };
 
-  broadcastToTopic("transactions", message);
+  if (privacyLevel === "public") {
+    broadcastToTopic("transactions", message);
+  }
   broadcastToTopic(`transactions:${senderId}`, message);
   broadcastToTopic(`transactions:${receiverId}`, message);
 };
 
 export const emitTransactionUpdated = (
   transactionId: string,
+  senderId: string,
+  receiverId: string,
   status: string,
   requestStatus?: string
 ): void => {
@@ -201,7 +206,8 @@ export const emitTransactionUpdated = (
     timestamp: new Date().toISOString(),
   };
 
-  broadcastToTopic("transactions", message);
+  broadcastToTopic(`transactions:${senderId}`, message);
+  broadcastToTopic(`transactions:${receiverId}`, message);
 };
 
 export const emitNotificationReceived = (notificationId: string, userId: string): void => {

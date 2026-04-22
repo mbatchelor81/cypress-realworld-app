@@ -124,6 +124,7 @@ export const disconnect = (): void => {
     socket = null;
   }
 
+  subscriptions.length = 0;
   reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
 };
 

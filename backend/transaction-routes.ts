@@ -6,6 +6,7 @@ import {
   getTransactionsForUserContacts,
   createTransaction,
   updateTransactionById,
+  getTransactionById,
   getPublicTransactionsDefaultSort,
   getTransactionByIdForApi,
   getTransactionsForUserForApi,
@@ -151,7 +152,8 @@ router.post(
     emitTransactionCreated(
       transaction.id,
       transaction.senderId,
-      transaction.receiverId
+      transaction.receiverId,
+      transaction.privacyLevel
     );
 
     res.status(200);
@@ -185,7 +187,14 @@ router.patch(
     /* istanbul ignore next */
     await updateTransactionById(transactionId, req.body);
 
-    emitTransactionUpdated(transactionId, req.body.status, req.body.requestStatus);
+    const updatedTransaction = await getTransactionById(transactionId);
+    emitTransactionUpdated(
+      transactionId,
+      updatedTransaction.senderId,
+      updatedTransaction.receiverId,
+      updatedTransaction.status,
+      updatedTransaction.requestStatus as string | undefined
+    );
 
     res.sendStatus(204);
   }
