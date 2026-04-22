@@ -4,6 +4,7 @@ import express from "express";
 import { getLikesByTransactionId, createLikes } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { shortIdValidation } from "./validators";
+import { emitLikeCreated } from "./websocket-server";
 const router = express.Router();
 
 // Routes
@@ -31,6 +32,8 @@ router.post(
     const { transactionId } = req.params;
     /* istanbul ignore next */
     await createLikes(req.user?.id!, transactionId);
+
+    emitLikeCreated(req.user?.id!, transactionId, req.user?.id!);
 
     res.sendStatus(200);
   }
