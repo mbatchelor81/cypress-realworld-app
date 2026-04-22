@@ -62,6 +62,10 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
     }
     sockets.add(ws);
 
+    ws.on("error", () => {
+      // Swallow per-socket errors so an unhandled 'error' event does not crash the process.
+    });
+
     ws.on("close", () => {
       const current = userConnections.get(userId);
       if (!current) {
