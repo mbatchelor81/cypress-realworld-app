@@ -3,23 +3,17 @@ import type { Duplex } from "stream";
 import type { RequestHandler, Response } from "express";
 import { WebSocket, WebSocketServer } from "ws";
 
-interface AuthenticatedUser {
-  id?: string;
-  sub?: string;
-}
-
 interface SessionRequest extends IncomingMessage {
-  session?: Record<string, unknown>;
-  user?: AuthenticatedUser;
+  session?: {
+    passport?: { user?: string };
+    [key: string]: unknown;
+  };
 }
 
 const userConnections: Map<string, Set<WebSocket>> = new Map();
 
-function getUserId(user: AuthenticatedUser | undefined): string | undefined {
-  if (!user) {
-    return undefined;
-  }
-  return user.id ?? user.sub;
+function getUserIdFromSession(req: SessionRequest): string | undefined {
+  return req.session?.passport?.user;
 }
 
 export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: RequestHandler): void {
@@ -35,7 +29,7 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
         return;
       }
 
-      const userId = getUserId(sessionRequest.user);
+      const userId = getUserIdFromSession(sessionRequest);
       if (!userId) {
         socket.destroy();
         return;
@@ -49,7 +43,7 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
 
   wss.on("connection", (ws: WebSocket, request: IncomingMessage) => {
     const sessionRequest = request as SessionRequest;
-    const userId = getUserId(sessionRequest.user);
+    const userId = getUserIdFromSession(sessionRequest);
     if (!userId) {
       ws.close();
       return;
@@ -61,6 +55,10 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
       userConnections.set(userId, sockets);
     }
     sockets.add(ws);
+
+    ws.on("error", () => {
+      // Prevent unhandled 'error' events from crashing the process
+    });
 
     ws.on("close", () => {
       const current = userConnections.get(userId);

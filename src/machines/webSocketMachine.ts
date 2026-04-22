@@ -3,8 +3,12 @@ import { Machine, assign, Sender } from "xstate";
 export interface WebSocketSchema {
   states: {
     idle: {};
-    connecting: {};
-    connected: {};
+    active: {
+      states: {
+        connecting: {};
+        connected: {};
+      };
+    };
     disconnected: {};
   };
 }
@@ -42,14 +46,15 @@ export const webSocketMachine = Machine<WebSocketContext, WebSocketSchema, WebSo
       idle: {
         on: {
           CONNECT: {
-            target: "connecting",
+            target: "active",
             actions: assign<WebSocketContext, WebSocketEvents>({
               url: (_ctx, event) => (event.type === "CONNECT" ? event.url : ""),
             }),
           },
         },
       },
-      connecting: {
+      active: {
+        initial: "connecting",
         invoke: {
           id: "webSocketService",
           src: (context: WebSocketContext) => (send: Sender<WebSocketEvents>) => {
@@ -88,32 +93,37 @@ export const webSocketMachine = Machine<WebSocketContext, WebSocketSchema, WebSo
           },
         },
         on: {
-          CONNECTED: "connected",
+          DISCONNECT: "idle",
           DISCONNECTED: "disconnected",
         },
-      },
-      connected: {
-        on: {
-          WS_MESSAGE: {
-            actions: assign<WebSocketContext, WebSocketEvents>({
-              hasNewNotifications: (ctx, event) =>
-                event.type === "WS_MESSAGE" && isNotificationCreated(event.data)
-                  ? true
-                  : ctx.hasNewNotifications,
-            }),
+        states: {
+          connecting: {
+            on: {
+              CONNECTED: "connected",
+            },
           },
-          CLEAR_NEW_NOTIFICATIONS: {
-            actions: assign<WebSocketContext, WebSocketEvents>({
-              hasNewNotifications: (_ctx) => false,
-            }),
+          connected: {
+            on: {
+              WS_MESSAGE: {
+                actions: assign<WebSocketContext, WebSocketEvents>({
+                  hasNewNotifications: (ctx, event) =>
+                    event.type === "WS_MESSAGE" && isNotificationCreated(event.data)
+                      ? true
+                      : ctx.hasNewNotifications,
+                }),
+              },
+              CLEAR_NEW_NOTIFICATIONS: {
+                actions: assign<WebSocketContext, WebSocketEvents>({
+                  hasNewNotifications: () => false,
+                }),
+              },
+            },
           },
-          DISCONNECTED: "disconnected",
-          DISCONNECT: "idle",
         },
       },
       disconnected: {
         after: {
-          3000: "connecting",
+          3000: "active",
         },
         on: {
           DISCONNECT: "idle",
