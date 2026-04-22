@@ -52,6 +52,7 @@ const App: React.FC = () => {
     } else {
       disconnect();
     }
+    return () => disconnect();
   }, [isLoggedIn]);
 
   return (
