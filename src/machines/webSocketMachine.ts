@@ -23,7 +23,7 @@ export type WebSocketEvents =
 
 export interface WebSocketContext {
   url: string;
-  hasNewNotifications: boolean;
+  notificationVersion: number;
 }
 
 const isNotificationCreated = (data: unknown): boolean => {
@@ -40,12 +40,12 @@ export const webSocketMachine = Machine<WebSocketContext, WebSocketSchema, WebSo
     initial: "idle",
     context: {
       url: "",
-      hasNewNotifications: false,
+      notificationVersion: 0,
     },
     on: {
       CLEAR_NEW_NOTIFICATIONS: {
         actions: assign<WebSocketContext, WebSocketEvents>({
-          hasNewNotifications: () => false,
+          notificationVersion: () => 0,
         }),
       },
     },
@@ -113,10 +113,10 @@ export const webSocketMachine = Machine<WebSocketContext, WebSocketSchema, WebSo
             on: {
               WS_MESSAGE: {
                 actions: assign<WebSocketContext, WebSocketEvents>({
-                  hasNewNotifications: (ctx, event) =>
+                  notificationVersion: (ctx, event) =>
                     event.type === "WS_MESSAGE" && isNotificationCreated(event.data)
-                      ? true
-                      : ctx.hasNewNotifications,
+                      ? ctx.notificationVersion + 1
+                      : ctx.notificationVersion,
                 }),
               },
             },

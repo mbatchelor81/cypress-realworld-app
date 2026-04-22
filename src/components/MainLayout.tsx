@@ -109,7 +109,7 @@ const MainLayout: React.FC<Props> = ({ children, notificationsService, authServi
         toggleDrawer={xsBreakpoint ? toggleMobileDrawer : toggleDesktopDrawer}
         drawerOpen={xsBreakpoint ? mobileDrawerOpen : desktopDrawerOpen}
         notificationsService={notificationsService}
-        hasNewNotifications={wsState.context.hasNewNotifications}
+        hasNewNotifications={wsState.context.notificationVersion > 0}
       />
       <NavDrawer
         toggleDrawer={xsBreakpoint ? toggleMobileDrawer : toggleDesktopDrawer}

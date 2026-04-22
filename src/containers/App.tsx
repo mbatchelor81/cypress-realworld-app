@@ -58,10 +58,10 @@ const App: React.FC = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (wsState.context.hasNewNotifications) {
+    if (wsState.context.notificationVersion > 0) {
       sendNotifications({ type: "FETCH" });
     }
-  }, [wsState.context.hasNewNotifications]);
+  }, [wsState.context.notificationVersion]);
 
   return (
     <Root className={classes.root}>

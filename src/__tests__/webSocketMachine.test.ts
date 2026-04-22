@@ -88,7 +88,7 @@ describe("webSocketMachine", () => {
     service.stop();
   });
 
-  it("should set hasNewNotifications on NOTIFICATION_CREATED message", async () => {
+  it("should increment notificationVersion on NOTIFICATION_CREATED message", async () => {
     const service = interpret(webSocketMachine).start();
     service.send({ type: "CONNECT", url: "ws://localhost:3001/ws" });
 
@@ -100,11 +100,16 @@ describe("webSocketMachine", () => {
     mockInstances[0].simulateMessage({ type: "NOTIFICATION_CREATED" });
 
     await delay(50);
-    expect(service.state.context.hasNewNotifications).toBe(true);
+    expect(service.state.context.notificationVersion).toBe(1);
+
+    mockInstances[0].simulateMessage({ type: "NOTIFICATION_CREATED" });
+
+    await delay(50);
+    expect(service.state.context.notificationVersion).toBe(2);
     service.stop();
   });
 
-  it("should clear hasNewNotifications on CLEAR_NEW_NOTIFICATIONS", async () => {
+  it("should reset notificationVersion on CLEAR_NEW_NOTIFICATIONS", async () => {
     const service = interpret(webSocketMachine).start();
     service.send({ type: "CONNECT", url: "ws://localhost:3001/ws" });
 
@@ -113,11 +118,12 @@ describe("webSocketMachine", () => {
 
     await delay(50);
     mockInstances[0].simulateMessage({ type: "NOTIFICATION_CREATED" });
+    mockInstances[0].simulateMessage({ type: "NOTIFICATION_CREATED" });
 
     await delay(50);
-    expect(service.state.context.hasNewNotifications).toBe(true);
+    expect(service.state.context.notificationVersion).toBe(2);
     service.send({ type: "CLEAR_NEW_NOTIFICATIONS" });
-    expect(service.state.context.hasNewNotifications).toBe(false);
+    expect(service.state.context.notificationVersion).toBe(0);
     service.stop();
   });
 
@@ -152,7 +158,7 @@ describe("webSocketMachine", () => {
     service.stop();
   }, 10000);
 
-  it("should clear hasNewNotifications in disconnected state", async () => {
+  it("should reset notificationVersion in disconnected state", async () => {
     const service = interpret(webSocketMachine).start();
     service.send({ type: "CONNECT", url: "ws://localhost:3001/ws" });
 
@@ -163,15 +169,15 @@ describe("webSocketMachine", () => {
     mockInstances[0].simulateMessage({ type: "NOTIFICATION_CREATED" });
 
     await delay(50);
-    expect(service.state.context.hasNewNotifications).toBe(true);
+    expect(service.state.context.notificationVersion).toBe(1);
     mockInstances[0].simulateClose();
 
     await delay(50);
     expect(service.state.matches("disconnected")).toBe(true);
-    expect(service.state.context.hasNewNotifications).toBe(true);
+    expect(service.state.context.notificationVersion).toBe(1);
 
     service.send({ type: "CLEAR_NEW_NOTIFICATIONS" });
-    expect(service.state.context.hasNewNotifications).toBe(false);
+    expect(service.state.context.notificationVersion).toBe(0);
     service.stop();
   });
 
