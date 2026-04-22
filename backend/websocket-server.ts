@@ -1,6 +1,6 @@
-import type { IncomingMessage, Server as HTTPServer } from "http";
+import type { IncomingMessage, Server as HTTPServer, ServerResponse } from "http";
 import type { Duplex } from "stream";
-import type { RequestHandler, Response } from "express";
+import type { RequestHandler } from "express";
 import { WebSocket, WebSocketServer } from "ws";
 
 interface SessionRequest extends IncomingMessage {
@@ -21,11 +21,12 @@ export function setupWebSocketServer(server: HTTPServer, sessionMiddleware: Requ
 
   server.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
     if (request.url !== "/ws") {
+      socket.destroy();
       return;
     }
 
     const sessionRequest = request as SessionRequest;
-    const fakeResponse = {} as Response;
+    const fakeResponse = Object.create(ServerResponse.prototype) as ServerResponse;
 
     sessionMiddleware(sessionRequest as unknown as Parameters<RequestHandler>[0], fakeResponse, (err?: unknown) => {
       if (err) {

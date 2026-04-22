@@ -50,13 +50,12 @@ const App: React.FC = () => {
     authState.matches("updating");
 
   useEffect(() => {
-    if (authState.matches("authorized")) {
+    if (isLoggedIn) {
       sendWs({ type: "CONNECT", url: `ws://localhost:${backendPort}/ws` });
-    }
-    return () => {
+    } else {
       sendWs({ type: "DISCONNECT" });
-    };
-  }, [authState.value]);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (wsState.context.hasNewNotifications) {
