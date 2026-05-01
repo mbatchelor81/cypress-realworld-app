@@ -16,6 +16,7 @@ import {
   Grid,
   Avatar,
   Typography,
+  Badge,
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import {
@@ -114,7 +115,8 @@ const drawerWidth = 240;
 
 export const mainListItems = (
   toggleDrawer: ((event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void) | undefined,
-  showTemporaryDrawer: Boolean
+  showTemporaryDrawer: Boolean,
+  notificationCount?: number
 ) => (
   <div>
     <ListItem
@@ -165,7 +167,13 @@ export const mainListItems = (
       data-test="sidenav-notifications"
     >
       <ListItemIcon>
-        <NotificationsIcon />
+        <Badge
+          badgeContent={notificationCount}
+          color="error"
+          data-test="sidenav-notifications-count"
+        >
+          <NotificationsIcon />
+        </Badge>
       </ListItemIcon>
       <ListItemText primary="Notifications" />
     </ListItem>
@@ -188,6 +196,7 @@ interface Props {
   toggleDrawer: () => void;
   drawerOpen: boolean;
   authService: Interpreter<AuthMachineContext, any, AuthMachineEvents, any>;
+  notificationCount?: number;
 }
 
 const NavDrawer: React.FC<Props> = ({
@@ -195,6 +204,7 @@ const NavDrawer: React.FC<Props> = ({
   closeMobileDrawer,
   drawerOpen,
   authService,
+  notificationCount,
 }) => {
   const theme = useTheme();
   const [authState, sendAuth] = useActor(authService);
@@ -283,7 +293,7 @@ const NavDrawer: React.FC<Props> = ({
           <Divider />
         </Grid>
         <Grid item>
-          <List>{mainListItems(toggleDrawer, showTemporaryDrawer)}</List>
+          <List>{mainListItems(toggleDrawer, showTemporaryDrawer, notificationCount)}</List>
         </Grid>
         <Grid item>
           <Divider />

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Switch } from "react-router";
 import {
   BaseActionObject,
@@ -20,6 +20,7 @@ import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../mac
 import { SnackbarContext, SnackbarSchema, SnackbarEvents } from "../machines/snackbarMachine";
 import { useActor } from "@xstate/react";
 import UserOnboardingContainer from "./UserOnboardingContainer";
+import { NotificationWebSocket } from "../utils/websocketClient";
 
 export interface Props {
   isLoggedIn: boolean;
@@ -55,9 +56,33 @@ const PrivateRoutesContainer: React.FC<Props> = ({
   bankAccountsService,
 }) => {
   const [, sendNotifications] = useActor(notificationsService);
+  const wsRef = useRef<NotificationWebSocket | null>(null);
 
   useEffect(() => {
     sendNotifications({ type: "FETCH" });
+  }, [sendNotifications]);
+
+  useEffect(() => {
+    const wsClient = new NotificationWebSocket(
+      (message) => {
+        if (message.type === "notification") {
+          sendNotifications({ type: "FETCH" });
+        }
+      },
+      () => {
+        sendNotifications({ type: "FETCH" });
+      }
+    );
+    wsRef.current = wsClient;
+
+    const wsToken = localStorage.getItem("wsToken");
+    if (wsToken) {
+      wsClient.connect(wsToken);
+    }
+
+    return () => {
+      wsClient.disconnect();
+    };
   }, [sendNotifications]);
 
   return (

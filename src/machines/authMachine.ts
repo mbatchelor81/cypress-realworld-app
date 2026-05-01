@@ -157,6 +157,9 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         return await httpClient
           .post(`http://localhost:${backendPort}/login`, event)
           .then(({ data }) => {
+            if (data.wsToken) {
+              localStorage.setItem("wsToken", data.wsToken);
+            }
             history.push("/");
             return data;
           })
@@ -181,6 +184,9 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
       },
       getUserProfile: async (ctx, event) => {
         const resp = await httpClient.get(`http://localhost:${backendPort}/checkAuth`);
+        if (resp.data.wsToken) {
+          localStorage.setItem("wsToken", resp.data.wsToken);
+        }
         return resp.data;
       },
       getGoogleUserProfile: /* istanbul ignore next */ (ctx, event: any) => {
@@ -222,6 +228,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
       },
       performLogout: async (ctx, event) => {
         localStorage.removeItem("authState");
+        localStorage.removeItem("wsToken");
         return await httpClient.post(`http://localhost:${backendPort}/logout`);
       },
       getCognitoUserProfile: /* istanbul ignore next */ (ctx, event: any) => {

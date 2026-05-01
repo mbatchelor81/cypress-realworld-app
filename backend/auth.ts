@@ -1,8 +1,10 @@
 import bcrypt from "bcryptjs";
 import passport from "passport";
 import express, { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 import { User } from "../src/models/user";
 import { getUserBy, getUserById } from "./database";
+import { JWT_SECRET } from "./websocket-server";
 
 const LocalStrategy = require("passport-local").Strategy;
 const router = express.Router();
@@ -51,7 +53,9 @@ router.post("/login", passport.authenticate("local"), (req: Request, res: Respon
     req.session!.cookie.expires = undefined;
   }
 
-  res.send({ user: req.user });
+  const user = req.user as User;
+  const wsToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "24h" });
+  res.send({ user: req.user, wsToken });
 });
 
 router.post("/logout", (req: Request, res: Response): void => {
@@ -67,7 +71,9 @@ router.get("/checkAuth", (req, res) => {
   if (!req.user) {
     res.status(401).json({ error: "User is unauthorized" });
   } else {
-    res.status(200).json({ user: req.user });
+    const user = req.user as User;
+    const wsToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "24h" });
+    res.status(200).json({ user: req.user, wsToken });
   }
 });
 

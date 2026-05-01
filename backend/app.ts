@@ -1,4 +1,5 @@
 import express from "express";
+import { createServer } from "http";
 import { join } from "path";
 import logger from "morgan";
 import passport from "passport";
@@ -26,6 +27,7 @@ import testDataRoutes from "./testdata-routes";
 import { checkAuth0Jwt, verifyOktaToken, checkCognitoJwt, checkGoogleJwt } from "./helpers";
 import resolvers from "./graphql/resolvers";
 import { frontendPort, getBackendPort } from "../src/utils/portUtils";
+import { initWebSocketServer } from "./websocket-server";
 
 require("dotenv").config();
 
@@ -120,6 +122,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
+const server = createServer(app);
+initWebSocketServer(server);
+
 getBackendPort().then((port) => {
-  app.listen(port);
+  server.listen(port);
 });
