@@ -105,7 +105,7 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   [`& .${classes.pulseBadge}`]: {
     backgroundColor: "red",
     color: "white",
-    animation: "$pulse 1.5s ease-in-out 3",
+    animation: "pulse 1.5s ease-in-out 3",
   },
 
   "@keyframes pulse": {
@@ -144,6 +144,7 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
     if (currentCount > prevCountRef.current && prevCountRef.current > 0) {
       setIsPulsing(true);
       const timer = setTimeout(() => setIsPulsing(false), 4500);
+      prevCountRef.current = currentCount;
       return () => clearTimeout(timer);
     }
     prevCountRef.current = currentCount;
