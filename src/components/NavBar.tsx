@@ -138,10 +138,16 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
 
   const [isPulsing, setIsPulsing] = useState(false);
   const prevCountRef = useRef<number>(0);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     const currentCount = allNotifications?.length ?? 0;
-    if (currentCount > prevCountRef.current && prevCountRef.current > 0) {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      prevCountRef.current = currentCount;
+      return;
+    }
+    if (currentCount > prevCountRef.current) {
       setIsPulsing(true);
       const timer = setTimeout(() => setIsPulsing(false), 4500);
       prevCountRef.current = currentCount;
