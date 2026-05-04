@@ -3,18 +3,18 @@ import { isEqual } from "lodash/fp";
 import { User, NotificationType, Transaction, BankAccount } from "../../../src/models";
 
 type TestTransactionsCtx = {
-  receiver?: User;
-  authenticatedUser?: User;
-  transactionId?: string;
-  notificationId?: string;
-  bankAccountId?: string;
+  receiver: User;
+  authenticatedUser: User;
+  transactionId: string;
+  notificationId: string;
+  bankAccountId: string;
 };
 
 const getFakeAmount = () => parseInt(faker.finance.amount(), 10);
 const apiTransactions = `${Cypress.env("apiUrl")}/transactions`;
 
 describe("Transactions API", function () {
-  let ctx: TestTransactionsCtx = {};
+  let ctx = {} as TestTransactionsCtx;
 
   before(() => {
     // Hacky workaround to have the e2e tests pass when cy.visit('http://localhost:3000') is called
@@ -22,7 +22,7 @@ describe("Transactions API", function () {
   });
 
   const isSenderOrReceiver = ({ senderId, receiverId }: Transaction) =>
-    isEqual(senderId, ctx.authenticatedUser?.id) || isEqual(receiverId, ctx.authenticatedUser?.id);
+    isEqual(senderId, ctx.authenticatedUser.id) || isEqual(receiverId, ctx.authenticatedUser.id);
 
   beforeEach(function () {
     cy.task("db:seed");
@@ -114,8 +114,8 @@ describe("Transactions API", function () {
       cy.request("POST", `${apiTransactions}`, {
         transactionType: "payment",
         source: ctx.bankAccountId,
-        receiverId: ctx.receiver?.id,
-        description: `Payment: ${ctx.authenticatedUser?.id} to ${ctx.receiver?.id}`,
+        receiverId: ctx.receiver.id,
+        description: `Payment: ${ctx.authenticatedUser.id} to ${ctx.receiver.id}`,
         amount: getFakeAmount(),
         privacyLevel: "public",
       }).then((response) => {
@@ -130,8 +130,8 @@ describe("Transactions API", function () {
       cy.request("POST", `${apiTransactions}`, {
         transactionType: "request",
         source: ctx.bankAccountId,
-        receiverId: ctx.receiver?.id,
-        description: `Request: ${ctx.authenticatedUser?.id} from ${ctx.receiver?.id}`,
+        receiverId: ctx.receiver.id,
+        description: `Request: ${ctx.authenticatedUser.id} from ${ctx.receiver.id}`,
         amount: getFakeAmount(),
         privacyLevel: "public",
       }).then((response) => {
