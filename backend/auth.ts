@@ -64,10 +64,10 @@ router.post("/logout", (req: Request, res: Response): void => {
 
 router.get("/checkAuth", (req, res) => {
   /* istanbul ignore next */
-  if (!req.user) {
-    res.status(401).json({ error: "User is unauthorized" });
-  } else {
+  if (req.user) {
     res.status(200).json({ user: req.user });
+  } else {
+    res.status(401).json({ error: "User is unauthorized" });
   }
 });
 
