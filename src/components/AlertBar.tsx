@@ -16,7 +16,7 @@ interface Props {
     SnackbarContext,
     SnackbarSchema,
     SnackbarEvents,
-    any,
+    { value: string; context: SnackbarContext },
     ResolveTypegenMeta<TypegenDisabled, SnackbarEvents, BaseActionObject, ServiceMap>
   >;
 }
