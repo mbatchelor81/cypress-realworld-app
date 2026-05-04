@@ -5,7 +5,7 @@ interface IPrivateRouteProps extends RouteProps {
   isLoggedIn: boolean;
 }
 
-function PrivateRoute({ isLoggedIn, children, ...rest }: IPrivateRouteProps) {
+const PrivateRoute: React.FC<IPrivateRouteProps> = ({ isLoggedIn, children, ...rest }) => {
   return (
     <Route
       {...rest}
@@ -24,6 +24,6 @@ function PrivateRoute({ isLoggedIn, children, ...rest }: IPrivateRouteProps) {
       }
     />
   );
-}
+};
 
 export default PrivateRoute;
