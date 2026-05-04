@@ -16,16 +16,15 @@ import {
   formatNotificationForApiResponse,
 } from "../../backend/database";
 
-import {
+import { PaymentNotificationStatus, NotificationsType } from "../../src/models";
+import type {
   User,
   Transaction,
-  PaymentNotificationStatus,
   PaymentNotification,
   Like,
   Comment,
   LikeNotification,
   CommentNotification,
-  NotificationsType,
   NotificationType,
 } from "../../src/models";
 
