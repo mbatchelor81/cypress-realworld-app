@@ -12,6 +12,7 @@ import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
 // @ts-ignore
 import { addResolversToSchema } from "@graphql-tools/schema";
 
+import dotenv from "dotenv";
 import auth from "./auth";
 import userRoutes from "./user-routes";
 import contactRoutes from "./contact-routes";
@@ -27,7 +28,7 @@ import { checkAuth0Jwt, verifyOktaToken, checkCognitoJwt, checkGoogleJwt } from 
 import resolvers from "./graphql/resolvers";
 import { frontendPort, getBackendPort } from "../src/utils/portUtils";
 
-require("dotenv").config();
+dotenv.config();
 
 const corsOption = {
   origin: `http://localhost:${frontendPort}`,
@@ -48,7 +49,7 @@ const app = express();
 /* istanbul ignore next */
 // @ts-ignore
 if (global.__coverage__) {
-  require("@cypress/code-coverage/middleware/express")(app);
+  import("@cypress/code-coverage/middleware/express").then((mod) => mod.default(app));
 }
 
 app.use(cors(corsOption));

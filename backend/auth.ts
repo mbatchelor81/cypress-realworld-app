@@ -4,7 +4,7 @@ import express, { Request, Response } from "express";
 import { User } from "../src/models/user";
 import { getUserBy, getUserById } from "./database";
 
-const LocalStrategy = require("passport-local").Strategy;
+import { Strategy as LocalStrategy } from "passport-local";
 const router = express.Router();
 
 // configure passport for local strategy

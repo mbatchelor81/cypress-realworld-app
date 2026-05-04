@@ -1,4 +1,3 @@
-import path from "path";
 import _ from "lodash";
 import axios from "axios";
 import dotenv from "dotenv";
@@ -10,12 +9,12 @@ import viteConfig from "./vite.cypress.config.ts";
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
-let awsConfig = {
+let awsConfig: { default: undefined | any } = {
   default: undefined,
 };
 
 try {
-  awsConfig = require(path.join(__dirname, "./aws-exports-es5.js"));
+  awsConfig = await import("./aws-exports-es5.js");
 } catch (e) {}
 
 export default defineConfig({
