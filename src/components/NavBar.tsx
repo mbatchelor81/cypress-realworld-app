@@ -114,7 +114,11 @@ interface NavBarProps {
   >;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notificationsService }) => {
+const NavBar: React.FC<NavBarProps> = ({
+  drawerOpen,
+  toggleDrawer,
+  notificationsService,
+}): React.ReactElement => {
   const match = useLocation();
 
   const theme = useTheme();
