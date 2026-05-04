@@ -59,7 +59,7 @@ const TransactionListAmountRangeFilter: React.FC<TransactionListAmountRangeFilte
   const amountRangeOpen = Boolean(amountRangeAnchorEl);
   const amountRangeId = amountRangeOpen ? "amount-range-popover" : undefined;
 
-  const AmountRangeFilter = () => (
+  const amountRangeFilter = (
     <Grid
       data-test="transaction-list-filter-amount-range"
       container
@@ -138,7 +138,7 @@ const TransactionListAmountRangeFilter: React.FC<TransactionListAmountRangeFilte
             horizontal: "left",
           }}
         >
-          <AmountRangeFilter />
+          {amountRangeFilter}
         </Popover>
       )}
       {xsBreakpoint && (
@@ -155,7 +155,7 @@ const TransactionListAmountRangeFilter: React.FC<TransactionListAmountRangeFilte
           >
             Close
           </Button>
-          <AmountRangeFilter />
+          {amountRangeFilter}
         </Drawer>
       )}
     </div>
