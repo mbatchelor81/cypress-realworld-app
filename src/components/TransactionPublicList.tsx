@@ -24,9 +24,9 @@ const TransactionPublicList: React.FC<TransactionPublicListProps> = ({
   const { pageData, results } = current.context;
 
   // @ts-ignore
-  if (window.Cypress) {
+  if (globalThis.Cypress) {
     // @ts-ignore
-    window.publicTransactionService = publicTransactionService;
+    globalThis.publicTransactionService = publicTransactionService;
   }
 
   useEffect(() => {
