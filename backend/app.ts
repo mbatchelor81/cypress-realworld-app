@@ -49,8 +49,7 @@ const app = express();
 /* istanbul ignore next */
 // @ts-ignore
 if (global.__coverage__) {
-  const coverageModule = await import("@cypress/code-coverage/middleware/express");
-  coverageModule.default(app);
+  import("@cypress/code-coverage/middleware/express").then((mod) => mod.default(app));
 }
 
 app.use(cors(corsOption));
