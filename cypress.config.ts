@@ -9,7 +9,7 @@ import viteConfig from "./vite.cypress.config.ts";
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
-let awsConfig: { default: undefined | any } = {
+let awsConfig: { default: undefined | Record<string, unknown> } = {
   default: undefined,
 };
 
