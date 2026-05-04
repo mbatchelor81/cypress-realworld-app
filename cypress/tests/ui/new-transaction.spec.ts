@@ -43,11 +43,13 @@ describe("New Transaction", function () {
     cy.getBySelLike("new-transaction").click();
     cy.wait("@allUsers");
 
-    cy.getBySel("user-list-search-input").type(ctx.contact!.firstName, { force: true });
+    cy.getBySel("user-list-search-input").type(ctx.contact?.firstName ?? "", { force: true });
     cy.wait("@usersSearch");
     cy.visualSnapshot("User Search First Name Input");
 
-    cy.getBySelLike("user-list-item").contains(ctx.contact!.firstName).click({ force: true });
+    cy.getBySelLike("user-list-item")
+      .contains(ctx.contact?.firstName ?? "")
+      .click({ force: true });
     cy.visualSnapshot("User Search First Name List Item");
 
     cy.getBySelLike("amount-input").type(payment.amount);
@@ -60,7 +62,7 @@ describe("New Transaction", function () {
       .and("have.text", "Transaction Submitted!");
 
     const updatedAccountBalance = Dinero({
-      amount: ctx.user!.balance - parseInt(payment.amount) * 100,
+      amount: (ctx.user?.balance ?? 0) - parseInt(payment.amount) * 100,
     }).toFormat();
 
     if (isMobile()) {
@@ -82,9 +84,9 @@ describe("New Transaction", function () {
 
     cy.getBySel("transaction-list").first().should("contain", payment.description);
 
-    cy.database("find", "users", { id: ctx.contact!.id })
+    cy.database("find", "users", { id: ctx.contact?.id })
       .its("balance")
-      .should("equal", ctx.contact!.balance + parseInt(payment.amount) * 100);
+      .should("equal", (ctx.contact?.balance ?? 0) + parseInt(payment.amount) * 100);
     cy.getBySel("alert-bar-success").should("not.exist");
     cy.visualSnapshot("Personal List Validate Transaction in List");
   });
@@ -98,7 +100,9 @@ describe("New Transaction", function () {
     cy.getBySelLike("new-transaction").click();
     cy.wait("@allUsers");
 
-    cy.getBySelLike("user-list-item").contains(ctx.contact!.firstName).click({ force: true });
+    cy.getBySelLike("user-list-item")
+      .contains(ctx.contact?.firstName ?? "")
+      .click({ force: true });
     cy.visualSnapshot("User Search First Name Input");
 
     cy.getBySelLike("amount-input").type(request.amount);
@@ -123,7 +127,9 @@ describe("New Transaction", function () {
     cy.getBySelLike("new-transaction").click();
     cy.wait("@allUsers");
 
-    cy.getBySelLike("user-list-item").contains(ctx.contact!.firstName).click({ force: true });
+    cy.getBySelLike("user-list-item")
+      .contains(ctx.contact?.firstName ?? "")
+      .click({ force: true });
 
     cy.getBySelLike("amount-input").type("43");
     cy.getBySelLike("amount-input").find("input").clear();
@@ -183,10 +189,10 @@ describe("New Transaction", function () {
     }
     cy.visualSnapshot("Transaction Payment Submitted Notification");
 
-    cy.switchUserByXstate(ctx.contact!.username);
+    cy.switchUserByXstate(ctx.contact?.username ?? "");
 
     const updatedAccountBalance = Dinero({
-      amount: ctx.contact!.balance + transactionPayload.amount * 100,
+      amount: (ctx.contact?.balance ?? 0) + transactionPayload.amount * 100,
     }).toFormat();
 
     if (isMobile()) {
@@ -212,7 +218,7 @@ describe("New Transaction", function () {
     cy.getBySel("new-transaction-create-another-transaction").should("be.visible");
     cy.visualSnapshot("receiver - Transaction Payment Submitted Notification");
 
-    cy.switchUserByXstate(ctx.contact!.username);
+    cy.switchUserByXstate(ctx.contact?.username ?? "");
 
     cy.getBySelLike("personal-tab").click();
 
@@ -234,10 +240,10 @@ describe("New Transaction", function () {
     cy.getBySelLike("transaction-description").should("be.visible");
     cy.visualSnapshot("Accept Transaction Request");
 
-    cy.switchUserByXstate(ctx.user!.username);
+    cy.switchUserByXstate(ctx.user?.username ?? "");
 
     const updatedAccountBalance = Dinero({
-      amount: ctx.user!.balance + transactionPayload.amount * 100,
+      amount: (ctx.user?.balance ?? 0) + transactionPayload.amount * 100,
     }).toFormat();
 
     if (isMobile()) {
@@ -264,7 +270,8 @@ describe("New Transaction", function () {
 
     searchAttrs.forEach((attr: keyof User) => {
       it(attr, function () {
-        const targetUser = ctx.allUsers![2];
+        const targetUser = ctx.allUsers?.[2];
+        if (!targetUser) return;
 
         cy.log(`Searching by **${attr}**`);
         cy.getBySel("user-list-search-input").type(targetUser[attr] as string, { force: true });

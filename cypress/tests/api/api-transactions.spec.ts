@@ -22,7 +22,7 @@ describe("Transactions API", function () {
   });
 
   const isSenderOrReceiver = ({ senderId, receiverId }: Transaction) =>
-    isEqual(senderId, ctx.authenticatedUser!.id) || isEqual(receiverId, ctx.authenticatedUser!.id);
+    isEqual(senderId, ctx.authenticatedUser?.id) || isEqual(receiverId, ctx.authenticatedUser?.id);
 
   beforeEach(function () {
     cy.task("db:seed");
@@ -114,8 +114,8 @@ describe("Transactions API", function () {
       cy.request("POST", `${apiTransactions}`, {
         transactionType: "payment",
         source: ctx.bankAccountId,
-        receiverId: ctx.receiver!.id,
-        description: `Payment: ${ctx.authenticatedUser!.id} to ${ctx.receiver!.id}`,
+        receiverId: ctx.receiver?.id,
+        description: `Payment: ${ctx.authenticatedUser?.id} to ${ctx.receiver?.id}`,
         amount: getFakeAmount(),
         privacyLevel: "public",
       }).then((response) => {
@@ -130,8 +130,8 @@ describe("Transactions API", function () {
       cy.request("POST", `${apiTransactions}`, {
         transactionType: "request",
         source: ctx.bankAccountId,
-        receiverId: ctx.receiver!.id,
-        description: `Request: ${ctx.authenticatedUser!.id} from ${ctx.receiver!.id}`,
+        receiverId: ctx.receiver?.id,
+        description: `Request: ${ctx.authenticatedUser?.id} from ${ctx.receiver?.id}`,
         amount: getFakeAmount(),
         privacyLevel: "public",
       }).then((response) => {
