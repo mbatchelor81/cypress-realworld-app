@@ -99,7 +99,7 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 type TransactionProps = {
   transaction: TransactionResponseItem;
   transactionLike: (transactionId: string) => void;
-  transactionComment: (payload: object) => void;
+  transactionComment: (payload: { transactionId: string; content: string }) => void;
   transactionUpdate: (payload: TransactionUpdateActionPayload) => void;
   currentUser: User;
 };
