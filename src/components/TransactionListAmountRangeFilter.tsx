@@ -26,7 +26,7 @@ type AmountRangeFilterProps = {
   setAmountRangeValue: React.Dispatch<React.SetStateAction<number[]>>;
   initialAmountRange: number[];
   resetAmountRange: Function;
-  handleAmountRangeChange: (_event: any, amountRange: number | number[]) => void;
+  handleAmountRangeChange: (_event: Event, amountRange: number | number[]) => void;
 };
 
 const AmountRangeFilter: React.FC<AmountRangeFilterProps> = ({
@@ -115,7 +115,7 @@ const TransactionListAmountRangeFilter: React.FC<TransactionListAmountRangeFilte
     setAmountRangeAnchorEl(null);
   };
 
-  const handleAmountRangeChange = (_event: any, amountRange: number | number[]) => {
+  const handleAmountRangeChange = (_event: Event, amountRange: number | number[]) => {
     filterAmountRange({
       amountMin: padAmountWithZeros(first(amountRange as number[]) as number),
       amountMax: padAmountWithZeros(last(amountRange as number[]) as number),
