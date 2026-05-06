@@ -8,7 +8,7 @@ export const contactsTransactionsMachine = dataMachine("contactsTransactions").w
     fetchData: async (ctx, event: any) => {
       const payload = omit("type", event);
       const resp = await httpClient.get(`http://localhost:${backendPort}/transactions/contacts`, {
-        params: !isEmpty(payload) ? payload : undefined,
+        params: isEmpty(payload) ? undefined : payload,
       });
       return resp.data;
     },
