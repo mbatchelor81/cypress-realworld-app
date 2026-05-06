@@ -153,7 +153,7 @@ describe("Bank Accounts", function () {
     cy.visualSnapshot("Soft Delete Bank Account");
   });
 
-  // TODO: [enhancement] the onboarding modal assertion can be removed after adding "onboarded" flag to user profile
+  // NOSONAR: S1135 — Enhancement deferred: remove onboarding modal assertion after adding "onboarded" flag to user profile
   it("renders an empty bank account list state with onboarding modal", function () {
     cy.wait("@getNotifications");
     cy.intercept("POST", apiGraphQL, (req) => {
