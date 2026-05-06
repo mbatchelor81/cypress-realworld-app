@@ -120,6 +120,6 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
-getBackendPort().then((port) => {
+getBackendPort().then((port) => { // NOSONAR typescript:S7785 — top-level await not supported; backend runs via ts-node with module:"commonjs"
   app.listen(port);
 });
