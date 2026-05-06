@@ -25,7 +25,6 @@ const classes = {
   content: `${PREFIX}-content`,
   container: `${PREFIX}-container`,
 };
-// TODO jss-to-styled codemod: The Fragment root was replaced by div. Change the tag if needed.
 const Root = styled("div")(({ theme }) => ({
   [`&`]: { display: "flex", flexGrow: 1 },
 
