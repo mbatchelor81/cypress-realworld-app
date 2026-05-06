@@ -27,8 +27,8 @@
     <div id="root"></div>
     <!-- to get aws amplify to work with vite -->
     <script>
-      window.global = window;
-      window.process = {
+      globalThis.global = globalThis;
+      globalThis.process = {
         env: { DEBUG: undefined },
       };
       var exports = {};
