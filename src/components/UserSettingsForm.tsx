@@ -27,7 +27,7 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
 }));
 
 const phoneRegExp =
-  /^((\\+[1-9]{1,4}[ \\-]*)|(\\(\\d{2,3}\\)[ \\-]*)|(\\d{2,4})[ \\-]*)*?\\d{3,4}?[ \\-]*\\d{3,4}?$/;
+  /^((\\+[1-9]{1,4}[ \\-]*)|(\\(\d{2,3}\\)[ \\-]*)|(\d{2,4})[ \\-]*)*?\d{3,4}?[ \\-]*\d{3,4}?$/;
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
 
