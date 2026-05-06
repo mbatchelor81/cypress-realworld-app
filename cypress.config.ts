@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import _ from "lodash";
 import axios from "axios";
 import dotenv from "dotenv";
