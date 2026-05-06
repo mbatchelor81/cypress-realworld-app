@@ -64,7 +64,7 @@ const TransactionInfiniteList: React.FC<TransactionListProps> = ({
     }
   }
 
-  const removePx = (str: string) => +str.slice(0, str.length - 2);
+  const removePx = (str: string) => +str.slice(0, -2);
 
   return (
     <StyledInfiniteLoader
