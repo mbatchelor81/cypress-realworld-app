@@ -45,23 +45,26 @@ const AppOkta: React.FC = () => {
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
   // @ts-ignore
-  if (window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
-    useEffect(() => {
-      const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
-      authService.send("OKTA", {
-        user: okta.user,
-        token: okta.token,
+  const isCypressProgrammatic = !!window.Cypress && !!process.env.VITE_OKTA_PROGRAMMATIC;
+
+  useEffect(() => {
+    if (!isCypressProgrammatic) return;
+    const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
+    authService.send("OKTA", {
+      user: okta.user,
+      token: okta.token,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (isCypressProgrammatic) return;
+    if (oktaAuthState.isAuthenticated) {
+      oktaAuthService.getUser().then((user: any) => {
+        authService.send("OKTA", { user, token: oktaAuthState.accessToken });
       });
-    }, []);
-  } else {
-    useEffect(() => {
-      if (oktaAuthState.isAuthenticated) {
-        oktaAuthService.getUser().then((user: any) => {
-          authService.send("OKTA", { user, token: oktaAuthState.accessToken });
-        });
-      }
-    }, [oktaAuthState, oktaAuthService]);
-  }
+    }
+  }, [isCypressProgrammatic, oktaAuthState, oktaAuthService]);
 
   const isLoggedIn =
     authState.matches("authorized") ||
