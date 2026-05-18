@@ -103,7 +103,13 @@ PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn install
 
 ### Environment Setup
 
-The application uses [Supabase][supabase] as its database backend. The required environment variables are configured in the [.env](./.env) file:
+The application uses [Supabase][supabase] as its database backend. To configure your environment, copy the example file and fill in your Supabase credentials:
+
+```shell
+cp .env.example .env
+```
+
+The key environment variables in [.env.example](./.env.example):
 
 | Variable                    | Description               | Default           |
 | --------------------------- | ------------------------- | ----------------- |
@@ -112,7 +118,7 @@ The application uses [Supabase][supabase] as its database backend. The required 
 | `SUPABASE_URL`              | Supabase project URL      | _(set in `.env`)_ |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | _(set in `.env`)_ |
 
-The default `.env` file ships with a pre-configured Supabase project for development. If you want to use your own Supabase instance, update `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env`. The database schema migration is located at [`supabase/migrations/001_init.sql`](./supabase/migrations/001_init.sql).
+Update `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your `.env` with credentials from your own Supabase project. The database schema migration is located at [`supabase/migrations/001_init.sql`](./supabase/migrations/001_init.sql).
 
 ### Run the app
 
