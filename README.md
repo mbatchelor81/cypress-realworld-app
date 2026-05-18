@@ -105,11 +105,11 @@ PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn install
 
 The application uses [Supabase][supabase] as its database backend. The required environment variables are configured in the [.env](./.env) file:
 
-| Variable | Description | Default |
-| -------- | ----------- | ------- |
-| `PORT` | Frontend port | `3000` |
-| `VITE_BACKEND_PORT` | Backend API port | `3001` |
-| `SUPABASE_URL` | Supabase project URL | _(set in `.env`)_ |
+| Variable                    | Description               | Default           |
+| --------------------------- | ------------------------- | ----------------- |
+| `PORT`                      | Frontend port             | `3000`            |
+| `VITE_BACKEND_PORT`         | Backend API port          | `3001`            |
+| `SUPABASE_URL`              | Supabase project URL      | _(set in `.env`)_ |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | _(set in `.env`)_ |
 
 The default `.env` file ships with a pre-configured Supabase project for development. If you want to use your own Supabase instance, update `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env`. The database schema migration is located at [`supabase/migrations/001_init.sql`](./supabase/migrations/001_init.sql).
@@ -180,25 +180,25 @@ yarn cypress:open
 
 ## NPM Scripts
 
-| Script         | Description                                                                                                                                                                       |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| dev            | Starts backend in watch mode and frontend                                                                                                                                         |
-| dev:coverage   | Starts backend in watch mode and frontend with instrumented code coverage enabled                                                                                                 |
-| dev:auth0      | Starts backend in watch mode and frontend; [Uses Auth0 for Authentication](#auth0) > [Read Guide](http://on.cypress.io/auth0)                                                     |
-| dev:okta       | Starts backend in watch mode and frontend; [Uses Okta for Authentication](#okta) > [Read Guide](http://on.cypress.io/okta)                                                        |
-| dev:cognito    | Starts backend in watch mode and frontend; [Uses Cognito for Authentication](#amazon-cognito) > [Read Guide](http://on.cypress.io/amazon-cognito)                                 |
-| dev:google     | Starts backend in watch mode and frontend; [Uses Google for Authentication](#google) > [Read Guide](https://docs.cypress.io/guides/testing-strategies/google-authentication.html) |
-| start          | Starts backend and frontend                                                                                                                                                       |
-| build          | Builds the frontend with Vite                                                                                                                                                     |
-| lint           | Runs ESLint and Prettier checks                                                                                                                                                   |
-| types          | Validates TypeScript types                                                                                                                                                        |
-| test:unit      | Runs Vitest unit tests in watch mode                                                                                                                                              |
-| test:unit:ci   | Runs Vitest unit tests (single run)                                                                                                                                               |
-| test:component:ci | Runs Cypress component tests                                                                                                                                                   |
-| test:api       | Runs Cypress API tests                                                                                                                                                            |
-| db:seed        | Generates fresh database seeds for json files in /data                                                                                                                            |
-| start:empty    | Starts backend, frontend and Cypress with empty database seed                                                                                                                     |
-| list:dev:users | Provides id and username for users in the dev database                                                                                                                            |
+| Script            | Description                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| dev               | Starts backend in watch mode and frontend                                                                                                                                         |
+| dev:coverage      | Starts backend in watch mode and frontend with instrumented code coverage enabled                                                                                                 |
+| dev:auth0         | Starts backend in watch mode and frontend; [Uses Auth0 for Authentication](#auth0) > [Read Guide](http://on.cypress.io/auth0)                                                     |
+| dev:okta          | Starts backend in watch mode and frontend; [Uses Okta for Authentication](#okta) > [Read Guide](http://on.cypress.io/okta)                                                        |
+| dev:cognito       | Starts backend in watch mode and frontend; [Uses Cognito for Authentication](#amazon-cognito) > [Read Guide](http://on.cypress.io/amazon-cognito)                                 |
+| dev:google        | Starts backend in watch mode and frontend; [Uses Google for Authentication](#google) > [Read Guide](https://docs.cypress.io/guides/testing-strategies/google-authentication.html) |
+| start             | Starts backend and frontend                                                                                                                                                       |
+| build             | Builds the frontend with Vite                                                                                                                                                     |
+| lint              | Runs ESLint and Prettier checks                                                                                                                                                   |
+| types             | Validates TypeScript types                                                                                                                                                        |
+| test:unit         | Runs Vitest unit tests in watch mode                                                                                                                                              |
+| test:unit:ci      | Runs Vitest unit tests (single run)                                                                                                                                               |
+| test:component:ci | Runs Cypress component tests                                                                                                                                                      |
+| test:api          | Runs Cypress API tests                                                                                                                                                            |
+| db:seed           | Generates fresh database seeds for json files in /data                                                                                                                            |
+| start:empty       | Starts backend, frontend and Cypress with empty database seed                                                                                                                     |
+| list:dev:users    | Provides id and username for users in the dev database                                                                                                                            |
 
 For a complete list of scripts see [package.json](./package.json)
 
