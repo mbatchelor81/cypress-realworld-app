@@ -35,9 +35,11 @@ if (process.env.VITE_AUTH0) {
     <Auth0Provider
       domain={process.env.VITE_AUTH0_DOMAIN!}
       clientId={process.env.VITE_AUTH0_CLIENTID!}
-      redirectUri={window.location.origin}
-      audience={process.env.VITE_AUTH0_AUDIENCE}
-      scope={process.env.VITE_AUTH0_SCOPE}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: process.env.VITE_AUTH0_AUDIENCE,
+        scope: process.env.VITE_AUTH0_SCOPE,
+      }}
       onRedirectCallback={onRedirectCallback}
       cacheLocation="localstorage"
     >
