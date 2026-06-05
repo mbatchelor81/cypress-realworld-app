@@ -27,7 +27,16 @@ describe("phoneRegExp", () => {
   });
 
   test("rejects invalid phone numbers", () => {
-    const invalid = ["", "12345", "123", "abcdef", "1-2-3-4-5-6", "99 99 99 99", "phone"];
+    const invalid = [
+      "",
+      "12345",
+      "123",
+      "abcdef",
+      "1-2-3-4-5-6",
+      "99 99 99 99",
+      "phone",
+      "555\\1234",
+    ];
     for (const value of invalid) {
       expect(phoneRegExp.test(value), value).toBe(false);
     }
