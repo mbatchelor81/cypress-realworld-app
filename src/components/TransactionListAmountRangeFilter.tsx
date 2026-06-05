@@ -32,7 +32,7 @@ type AmountRangeFilterProps = {
   initialAmountRange: number[];
   setAmountRangeValue: (value: number[]) => void;
   resetAmountRange: Function;
-  handleAmountRangeChange: (event: any, amountRange: number | number[]) => void;
+  handleAmountRangeChange: (event: Event, amountRange: number | number[]) => void;
 };
 
 const AmountRangeFilter: React.FC<AmountRangeFilterProps> = ({
