@@ -39,6 +39,35 @@ const Root = styled("div")(({ theme }) => ({
 }));
 
 /* istanbul ignore next */
+const CypressGoogleAuth: React.FC = () => {
+  useEffect(() => {
+    const { user, token } = JSON.parse(localStorage.getItem("googleCypress")!);
+    authService.send("GOOGLE", {
+      user,
+      token,
+    });
+  }, []);
+
+  return null;
+};
+
+/* istanbul ignore next */
+const GoogleLoginInit: React.FC = () => {
+  useGoogleLogin({
+    clientId: process.env.VITE_GOOGLE_CLIENTID!,
+    onSuccess: (res) => {
+      console.log("onSuccess", res);
+      // @ts-ignore
+      authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
+    },
+    cookiePolicy: "single_host_origin",
+    isSignedIn: true,
+  });
+
+  return null;
+};
+
+/* istanbul ignore next */
 const AppGoogle: React.FC = () => {
   const [authState] = useActor(authService);
   const [, , notificationsService] = useMachine(notificationsMachine);
@@ -48,32 +77,15 @@ const AppGoogle: React.FC = () => {
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
   // @ts-ignore
-  if (window.Cypress) {
-    useEffect(() => {
-      const { user, token } = JSON.parse(localStorage.getItem("googleCypress")!);
-      authService.send("GOOGLE", {
-        user,
-        token,
-      });
-    }, []);
-  } else {
-    useGoogleLogin({
-      clientId: process.env.VITE_GOOGLE_CLIENTID!,
-      onSuccess: (res) => {
-        console.log("onSuccess", res);
-        // @ts-ignore
-        authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
-      },
-      cookiePolicy: "single_host_origin",
-      isSignedIn: true,
-    });
-  }
+  const isCypress = window.Cypress;
 
   const isLoggedIn = authState.matches("authorized");
 
   return (
     <Root className={classes.root}>
       <CssBaseline />
+
+      {isCypress ? <CypressGoogleAuth /> : <GoogleLoginInit />}
 
       {isLoggedIn && (
         <PrivateRoutesContainer
