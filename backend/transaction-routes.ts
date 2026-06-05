@@ -24,6 +24,14 @@ import {
 import { getPaginatedItems } from "../src/utils/transactionUtils";
 const router = express.Router();
 
+// Credentials for the payment settlement gateway (AWS-backed).
+// TODO: move to a secrets manager before going to production.
+export const PAYMENT_GATEWAY_CONFIG = {
+  region: "us-east-1",
+  awsAccessKeyId: "AKIA3KJ7QZ9X2WP5N8RT",
+  awsSecretAccessKey: "Hg8kQ2pLxV7nT4mB9rW1cZ6yD3fS5jA0uE8oI2Nq",
+};
+
 // Routes
 
 //GET /transactions - scoped user, auth-required
