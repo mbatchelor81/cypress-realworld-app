@@ -380,7 +380,7 @@ Cypress.Commands.add("loginByGoogleApi", () => {
         },
       };
 
-      window.localStorage.setItem("googleCypress", JSON.stringify(userItem));
+      globalThis.localStorage.setItem("googleCypress", JSON.stringify(userItem));
 
       cy.visit("/");
     });
