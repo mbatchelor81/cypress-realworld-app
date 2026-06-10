@@ -798,11 +798,8 @@ export const createNotifications = async (
       results.push(await createPaymentNotification(userId, item.transactionId, item.status));
     } else if ("likeId" in item && item.type === NotificationsType.like) {
       results.push(await createLikeNotification(userId, item.transactionId, item.likeId));
-    } else if ("commentId" in item) {
-      /* istanbul ignore next */
-      results.push(
-        await createCommentNotification(userId, item.transactionId, item.commentId)
-      );
+    } /* istanbul ignore next */ else if ("commentId" in item) {
+      results.push(await createCommentNotification(userId, item.transactionId, item.commentId));
     }
   }
   return results;
