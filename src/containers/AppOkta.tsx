@@ -5,6 +5,7 @@ import { useActor, useMachine } from "@xstate/react";
 import { CssBaseline } from "@mui/material";
 // @ts-ignore
 import { LoginCallback, SecureRoute, useOktaAuth, withOktaAuth } from "@okta/okta-react";
+import type { UserClaims } from "@okta/okta-auth-js";
 import { Route } from "react-router-dom";
 
 import { snackbarMachine } from "../machines/snackbarMachine";
@@ -45,23 +46,25 @@ const AppOkta: React.FC = () => {
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
   // @ts-ignore
-  if (window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
-    useEffect(() => {
+  const isProgrammaticCypress = Boolean(window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC);
+
+  useEffect(() => {
+    if (isProgrammaticCypress) {
       const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
       authService.send("OKTA", {
         user: okta.user,
         token: okta.token,
       });
-    }, []);
-  } else {
-    useEffect(() => {
-      if (oktaAuthState.isAuthenticated) {
-        oktaAuthService.getUser().then((user: any) => {
-          authService.send("OKTA", { user, token: oktaAuthState.accessToken });
-        });
-      }
-    }, [oktaAuthState, oktaAuthService]);
-  }
+    }
+  }, [isProgrammaticCypress]);
+
+  useEffect(() => {
+    if (!isProgrammaticCypress && oktaAuthState.isAuthenticated) {
+      oktaAuthService.getUser().then((user: UserClaims) => {
+        authService.send("OKTA", { user, token: oktaAuthState.accessToken });
+      });
+    }
+  }, [isProgrammaticCypress, oktaAuthState, oktaAuthService]);
 
   const isLoggedIn =
     authState.matches("authorized") ||
