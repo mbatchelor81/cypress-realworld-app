@@ -1,4 +1,5 @@
 # Cognition Product Suite — End-to-End Demo Flow
+
 ## Repository: COG-GTM/cypress-realworld-app
 
 ---
@@ -9,12 +10,12 @@ This demo showcases four Cognition products working together on a single reposit
 
 **The narrative arc:** _Detect → Fix → Build → Test → Review → Merge_
 
-| Act | Product | Task | Unique Capability |
-|-----|---------|------|-------------------|
-| 1 | **Devin** | Remediate SonarQube code issues in parallel | Cloud agent, API-driven, parallel sessions, idempotent |
-| 2 | **Windsurf** | Add WebSocket real-time notifications | Codemaps for XState architecture, IDE-native creative work |
-| 3 | **Devin CLI** | Generate missing unit tests for the feature PR | Headless CI agent, multi-turn `--continue`, `--export` audit trail |
-| 4 | **Devin Review** | Review all 13+ PRs, catch XSS bug, auto-fix | Smart diff grouping, Bug Catcher, Auto-Fix, `REVIEW.md` conventions |
+| Act | Product          | Task                                           | Unique Capability                                                   |
+| --- | ---------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| 1   | **Devin**        | Remediate SonarQube code issues in parallel    | Cloud agent, API-driven, parallel sessions, idempotent              |
+| 2   | **Windsurf**     | Add WebSocket real-time notifications          | Codemaps for XState architecture, IDE-native creative work          |
+| 3   | **Devin CLI**    | Generate missing unit tests for the feature PR | Headless CI agent, multi-turn `--continue`, `--export` audit trail  |
+| 4   | **Devin Review** | Review all 13+ PRs, catch XSS bug, auto-fix    | Smart diff grouping, Bug Catcher, Auto-Fix, `REVIEW.md` conventions |
 
 **One-liner:** _"SonarQube flagged the issues. Devin fixed them all in parallel overnight. Windsurf built a new feature. The CLI wrote the tests. Devin Review caught a bug the human missed. All on one repo, all in one day."_
 
@@ -26,21 +27,21 @@ This demo showcases four Cognition products working together on a single reposit
 
 Add these in **Settings > Secrets and variables > Actions** on the `COG-GTM/cypress-realworld-app` repo:
 
-| Secret Name | Source | Used By |
-|-------------|--------|---------|
-| `DEVIN_SERVICE_USER_TOKEN` | Service user token (`cog_...`) with ManageOrgSessions + ImpersonateOrgSessions | Act 1: Devin v3 API |
-| `SONAR_TOKEN` | SonarQube / SonarCloud project token | Act 1: SonarQube API |
-| `WINDSURF_API_KEY` | Devin CLI auth (`apk_user_...` token) | Act 3: Devin CLI headless mode |
+| Secret Name                | Source                                                                         | Used By                        |
+| -------------------------- | ------------------------------------------------------------------------------ | ------------------------------ |
+| `DEVIN_SERVICE_USER_TOKEN` | Service user token (`cog_...`) with ManageOrgSessions + ImpersonateOrgSessions | Act 1: Devin v3 API            |
+| `SONAR_TOKEN`              | SonarQube / SonarCloud project token                                           | Act 1: SonarQube API           |
+| `WINDSURF_API_KEY`         | Devin CLI auth (`apk_user_...` token)                                          | Act 3: Devin CLI headless mode |
 
 ### Files to Add to the Repo
 
-| File | Purpose |
-|------|---------|
-| `.github/workflows/devin-sonar-remediation.yml` | Act 1: SonarQube scan → Devin API |
-| `.github/scripts/delegate_sonar_issues.py` | Act 1: Query SonarQube API, create Devin sessions |
-| `.github/workflows/devin-cli-tests.yml` | Act 3: Headless test generation |
-| `REVIEW.md` | Act 4: RWA-specific review guidelines |
-| `.windsurfrules` | Act 2: Windsurf project conventions |
+| File                                            | Purpose                                           |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `.github/workflows/devin-sonar-remediation.yml` | Act 1: SonarQube scan → Devin API                 |
+| `.github/scripts/delegate_sonar_issues.py`      | Act 1: Query SonarQube API, create Devin sessions |
+| `.github/workflows/devin-cli-tests.yml`         | Act 3: Headless test generation                   |
+| `REVIEW.md`                                     | Act 4: RWA-specific review guidelines             |
+| `.windsurfrules`                                | Act 2: Windsurf project conventions               |
 
 ### Devin Review Settings
 
@@ -104,7 +105,7 @@ The app is a full-stack TypeScript project with React, Express, and XState — e
 ```yaml
 name: SonarQube Remediation via Devin
 on:
-  workflow_dispatch:  # Manual trigger — click "Run workflow" in GitHub Actions
+  workflow_dispatch: # Manual trigger — click "Run workflow" in GitHub Actions
 
 jobs:
   remediate:
@@ -456,13 +457,13 @@ jobs:
 
 ### CLI Differentiators vs. Other Products
 
-| Capability | Devin (Cloud) | Windsurf (IDE) | Devin CLI |
-|-----------|---------------|----------------|-----------|
-| Runs in CI/CD | No | No | Yes |
-| Runs in containers | No | No | Yes |
-| Multi-turn stateful | N/A | Yes (interactive) | Yes (`--continue`) |
-| Audit trail export | Session logs | No | `--export` JSON |
-| No UI required | API only | Requires IDE | Fully headless |
+| Capability          | Devin (Cloud) | Windsurf (IDE)    | Devin CLI          |
+| ------------------- | ------------- | ----------------- | ------------------ |
+| Runs in CI/CD       | No            | No                | Yes                |
+| Runs in containers  | No            | No                | Yes                |
+| Multi-turn stateful | N/A           | Yes (interactive) | Yes (`--continue`) |
+| Audit trail export  | Session logs  | No                | `--export` JSON    |
+| No UI required      | API only      | Requires IDE      | Fully headless     |
 
 ---
 
@@ -495,21 +496,25 @@ Create `REVIEW.md` in the repo root:
 # Review Guidelines for Cypress Real World App
 
 ## Architecture
+
 - All state management uses XState machines in `src/machines/`
 - API routes follow RESTful conventions in `backend/`
 - Database access goes through `backend/database.ts`
 
 ## Security Requirements
+
 - Transaction amounts must be sanitized (XSS prevention)
 - All API endpoints must validate input with express-validator
 - User-generated content (transaction descriptions, comments) must be escaped
 
 ## Testing Requirements
+
 - All new components must have unit tests
 - XState machines must have test coverage for all states/transitions
 - No direct DOM manipulation — use React patterns
 
 ## Code Style
+
 - TypeScript strict mode — no `any` types
 - Follow existing patterns in the codebase
 - Use functional components with hooks
@@ -548,14 +553,14 @@ Create `REVIEW.md` in the repo root:
 
 ## Full Demo Script (Timing Guide)
 
-| Segment | Act | What to Show | Key Moment |
-|---------|-----|-------------|------------|
-| Opening | — | Show the RWA app running locally, explain the tech stack | "This is a real app with real dependencies and real code quality issues" |
-| Act 1 | Devin | Click "Run workflow" in GitHub Actions, show SonarQube dashboard, then Devin sessions spinning up in parallel on app.devin.ai | "One click — SonarQube issues delegated, Devin sessions running" |
-| Act 2 | Windsurf | Live-code the WebSocket feature using Codemaps | "Codemaps mapped the notification flow across 3 layers before I wrote a line" |
-| Act 3 | Devin CLI | Show the CI workflow running, the 3-step multi-turn conversation, the committed tests | "The CLI wrote tests, ran them, and committed — all headless in CI" |
-| Act 4 | Devin Review | Walk through the review UI: smart diffs, Bug Catcher findings, Auto-Fix | "It caught an XSS bug and already has the fix ready" |
-| Close | — | Show all PRs merged, the app running with the new feature | "Detect, fix, build, test, review, merge — one repo, one day, four products" |
+| Segment | Act          | What to Show                                                                                                                  | Key Moment                                                                    |
+| ------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Opening | —            | Show the RWA app running locally, explain the tech stack                                                                      | "This is a real app with real dependencies and real code quality issues"      |
+| Act 1   | Devin        | Click "Run workflow" in GitHub Actions, show SonarQube dashboard, then Devin sessions spinning up in parallel on app.devin.ai | "One click — SonarQube issues delegated, Devin sessions running"              |
+| Act 2   | Windsurf     | Live-code the WebSocket feature using Codemaps                                                                                | "Codemaps mapped the notification flow across 3 layers before I wrote a line" |
+| Act 3   | Devin CLI    | Show the CI workflow running, the 3-step multi-turn conversation, the committed tests                                         | "The CLI wrote tests, ran them, and committed — all headless in CI"           |
+| Act 4   | Devin Review | Walk through the review UI: smart diffs, Bug Catcher findings, Auto-Fix                                                       | "It caught an XSS bug and already has the fix ready"                          |
+| Close   | —            | Show all PRs merged, the app running with the new feature                                                                     | "Detect, fix, build, test, review, merge — one repo, one day, four products"  |
 
 ---
 
