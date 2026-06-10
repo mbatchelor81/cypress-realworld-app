@@ -37,17 +37,15 @@ const TransactionContactsList: React.FC<TransactionContactListProps> = ({
     send("FETCH", { page, ...dateRangeFilters, ...amountRangeFilters });
 
   return (
-    <>
-      <TransactionList
-        filterComponent={filterComponent}
-        header="Contacts"
-        transactions={results as TransactionResponseItem[]}
-        isLoading={current.matches("loading")}
-        loadNextPage={loadNextPage}
-        pagination={pageData as TransactionPagination}
-        showCreateButton
-      />
-    </>
+    <TransactionList
+      filterComponent={filterComponent}
+      header="Contacts"
+      transactions={results as TransactionResponseItem[]}
+      isLoading={current.matches("loading")}
+      loadNextPage={loadNextPage}
+      pagination={pageData as TransactionPagination}
+      showCreateButton
+    />
   );
 };
 
