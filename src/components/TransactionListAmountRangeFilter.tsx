@@ -115,7 +115,7 @@ const TransactionListAmountRangeFilter: React.FC<TransactionListAmountRangeFilte
     setAmountRangeAnchorEl(null);
   };
 
-  const handleAmountRangeChange = (_event: any, amountRange: number | number[]) => {
+  const handleAmountRangeChange = (_event: Event, amountRange: number | number[]) => {
     filterAmountRange({
       amountMin: padAmountWithZeros(first(amountRange as number[]) as number),
       amountMax: padAmountWithZeros(last(amountRange as number[]) as number),
