@@ -499,7 +499,7 @@ export const getPublicTransactionsByQuery = async (
       getNonContactPublicTransactionsForApi(userId),
     ]);
 
-    let filteredPublic = nonContactPublic as TransactionResponseItem[];
+    let filteredPublic = nonContactPublic;
 
     if (dateRangeStart && dateRangeEnd) {
       filteredPublic = filteredPublic.filter((t) =>
@@ -648,7 +648,7 @@ export const createLike = async (userId: string, transactionId: string): Promise
   };
 
   throwIfError(await supabase.from(LIKE_TABLE).insert(like));
-  return (await getLikeById(like.id)) as Like;
+  return await getLikeById(like.id);
 };
 
 export const createLikes = async (userId: string, transactionId: string) => {
@@ -695,7 +695,7 @@ export const createComment = async (
   };
 
   throwIfError(await supabase.from(COMMENT_TABLE).insert(comment));
-  return (await getCommentById(comment.id)) as Comment;
+  return await getCommentById(comment.id);
 };
 
 export const createComments = async (userId: string, transactionId: string, content: string) => {
