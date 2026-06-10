@@ -32,7 +32,7 @@ router.post(
     const { content } = req.body;
 
     /* istanbul ignore next */
-    await createComments(req.user?.id!, transactionId, content);
+    await createComments(req.user!.id, transactionId, content);
 
     res.sendStatus(200);
   }

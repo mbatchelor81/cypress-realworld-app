@@ -64,12 +64,12 @@ export const requestVariations = 3;
 // requestsPerUser * requestVariations * sender/receiver(2)
 export const transactionsPerUser =
   paymentsPerUser * paymentVariations * 2 + requestsPerUser * requestVariations * 2;
-export const totalTransactions = userbaseSize! * transactionsPerUser!;
-export const totalLikes = userbaseSize! * likesPerUser!;
-export const totalComments = userbaseSize! * commentsPerUser!;
-export const totalNotifications = userbaseSize! * notificationsPerUser!;
-export const totalContacts = userbaseSize! * contactsPerUser!;
-export const totalBankTransfers = userbaseSize! * bankTransfersPerUser * 2; // deposit & withdrawal
+export const totalTransactions = userbaseSize * transactionsPerUser;
+export const totalLikes = userbaseSize * likesPerUser;
+export const totalComments = userbaseSize * commentsPerUser;
+export const totalNotifications = userbaseSize * notificationsPerUser;
+export const totalContacts = userbaseSize * contactsPerUser;
+export const totalBankTransfers = userbaseSize * bankTransfersPerUser * 2; // deposit & withdrawal
 
 export const isPayment = (type: string) => type === "payment";
 export const passwordHash = bcrypt.hashSync(defaultPassword, 10);
@@ -479,7 +479,7 @@ export const createSeedNotifications = (
 
       const likeTransaction = sample(compact(getRandomTransactions(5, transactionsWithLikes)));
       const like = getLikeByTransactionId(likeTransaction!.id, seedLikes);
-      const likeNotification = createFakeLikeNotification(user.id, likeTransaction!.id, like!.id);
+      const likeNotification = createFakeLikeNotification(user.id, likeTransaction!.id, like.id);
 
       const commentTransaction = sample(
         compact(getRandomTransactions(5, transactionsWithComments))
@@ -489,18 +489,18 @@ export const createSeedNotifications = (
       const commentNotification = createFakeCommentNotification(
         user.id,
         commentTransaction!.id,
-        comment!.id
+        comment.id
       );
 
       // choose random transactions
       const randomTransactions = getRandomTransactions(notificationsPerUser - 2, transactions);
 
       const paymentRequestNotifications = randomTransactions.map((transaction) =>
-        createFakePaymentNotification(user.id, transaction!, PaymentNotificationStatus.requested)
+        createFakePaymentNotification(user.id, transaction, PaymentNotificationStatus.requested)
       );
 
       const paymentReceivedNotifications = randomTransactions.map((transaction) =>
-        createFakePaymentNotification(user.id, transaction!, PaymentNotificationStatus.received)
+        createFakePaymentNotification(user.id, transaction, PaymentNotificationStatus.received)
       );
 
       let allNotifications = [likeNotification, commentNotification];
