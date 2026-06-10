@@ -1,14 +1,6 @@
 import bcrypt from "bcryptjs";
 import { v4 } from "uuid";
-import {
-  uniqBy,
-  map,
-  sample,
-  orderBy,
-  flatMap,
-  get,
-  remove,
-} from "lodash/fp";
+import { uniqBy, map, sample, orderBy, flatMap, get, remove } from "lodash/fp";
 import { isWithinInterval } from "date-fns";
 import shortid from "shortid";
 import {
@@ -165,7 +157,7 @@ export const getAllByObj = async (entity: keyof DbSchema, query: Record<string, 
 };
 
 // Search
-export const cleanSearchQuery = (query: string) => query.replace(/[^a-zA-Z0-9]/g, "");
+export const cleanSearchQuery = (query: string) => query.replace(/%/g, "");
 
 export const searchUsers = async (query: string): Promise<User[]> => {
   const cleaned = cleanSearchQuery(query);
@@ -336,14 +328,26 @@ export const createBankTransfer = async (bankTransferDetails: BankTransferPayloa
 
 // Transaction
 
-export const getTransactionBy = async (key: string, value: any) =>
-  getBy(TRANSACTION_TABLE, key, value);
+const normalizeTransaction = <T extends { requestStatus?: string }>(txn: T): T => {
+  if (txn && txn.requestStatus === "") {
+    const { requestStatus, ...rest } = txn;
+    return rest as T;
+  }
+  return txn;
+};
+
+export const getTransactionBy = async (key: string, value: any) => {
+  const result = await getBy(TRANSACTION_TABLE, key, value);
+  return result ? normalizeTransaction(result as Transaction) : result;
+};
 
 export const getTransactionById = async (id: string) =>
   (await getTransactionBy("id", id)) as Transaction;
 
-export const getTransactionsByObj = async (query: Record<string, any>) =>
-  (await getAllByObj(TRANSACTION_TABLE, query)) as Transaction[];
+export const getTransactionsByObj = async (query: Record<string, any>) => {
+  const results = (await getAllByObj(TRANSACTION_TABLE, query)) as Transaction[];
+  return results.map(normalizeTransaction) as Transaction[];
+};
 
 export const getTransactionByIdForApi = async (id: string) => {
   const transaction = await getTransactionBy("id", id);
@@ -458,7 +462,10 @@ export const getTransactionsForUserContacts = async (
   const results = await Promise.all(
     contactIds.map((contactId) => getTransactionsForUserForApi(contactId, query))
   );
-  return uniqBy("id", flatMap((x: TransactionResponseItem[]) => x, results));
+  return uniqBy(
+    "id",
+    flatMap((x: TransactionResponseItem[]) => x, results)
+  );
 };
 
 export const getTransactionIds = (transactions: Transaction[]) => map("id", transactions);
@@ -511,9 +518,7 @@ export const getPublicTransactionsByQuery = async (
     }
 
     if (amountMin && amountMax) {
-      filteredPublic = filteredPublic.filter(
-        (t) => t.amount >= amountMin && t.amount <= amountMax
-      );
+      filteredPublic = filteredPublic.filter((t) => t.amount >= amountMin && t.amount <= amountMax);
     }
 
     return { contactsTransactions, publicTransactions: filteredPublic };
@@ -571,7 +576,6 @@ export const createTransaction = async (
   };
 
   throwIfError(await supabase.from(TRANSACTION_TABLE).insert(transaction));
-  const savedTransaction = (await getTransactionBy("id", transaction.id)) as Transaction;
 
   // if payment, debit sender's balance for payment amount
   if (isPayment(transaction)) {
@@ -593,13 +597,10 @@ export const createTransaction = async (
     );
   }
 
-  return savedTransaction;
+  return (await getTransactionBy("id", transaction.id)) as Transaction;
 };
 
-export const updateTransactionById = async (
-  transactionId: string,
-  edits: Partial<Transaction>
-) => {
+export const updateTransactionById = async (transactionId: string, edits: Partial<Transaction>) => {
   const transaction = (await getTransactionBy("id", transactionId)) as Transaction;
   const { senderId, receiverId } = transaction;
   const sender = await getUserById(senderId);
@@ -801,9 +802,7 @@ export const createNotifications = async (
     } else {
       /* istanbul ignore next */
       if ("commentId" in item) {
-        results.push(
-          await createCommentNotification(userId, item.transactionId, item.commentId)
-        );
+        results.push(await createCommentNotification(userId, item.transactionId, item.commentId));
       }
     }
   }
@@ -892,8 +891,7 @@ export const getNotificationById = async (id: string): Promise<NotificationType>
   getNotificationBy("id", id);
 
 /* istanbul ignore next */
-export const getNotificationsByUserId = async (userId: string) =>
-  getNotificationsByObj({ userId });
+export const getNotificationsByUserId = async (userId: string) => getNotificationsByObj({ userId });
 
 /* istanbul ignore next */
 export const getBankTransferByTransactionId = async (transactionId: string) =>
@@ -904,5 +902,11 @@ export const getTransactionsBy = async (key: string, value: string) =>
   getAllBy(TRANSACTION_TABLE, key, value);
 
 /* istanbul ignore next */
-export const getTransactionsByUserId = async (userId: string) =>
-  getTransactionsBy("receiverId", userId);
+export const getTransactionsByUserId = async (userId: string): Promise<Transaction[]> => {
+  const { data, error } = await supabase
+    .from(TRANSACTION_TABLE)
+    .select("*")
+    .or(`senderId.eq.${userId},receiverId.eq.${userId}`);
+  if (error) throw error;
+  return (data as Transaction[]).map(normalizeTransaction) as Transaction[];
+};

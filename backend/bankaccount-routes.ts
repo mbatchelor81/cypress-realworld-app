@@ -39,13 +39,18 @@ router.get(
 );
 
 //POST /bankAccounts (scoped-user)
-router.post("/", ensureAuthenticated, validateMiddleware(isBankAccountValidator), async (req, res) => {
-  /* istanbul ignore next */
-  const account = await createBankAccountForUser(req.user?.id!, req.body);
+router.post(
+  "/",
+  ensureAuthenticated,
+  validateMiddleware(isBankAccountValidator),
+  async (req, res) => {
+    /* istanbul ignore next */
+    const account = await createBankAccountForUser(req.user?.id!, req.body);
 
-  res.status(200);
-  res.json({ account });
-});
+    res.status(200);
+    res.json({ account });
+  }
+);
 
 //DELETE (soft) /bankAccounts (scoped-user)
 router.delete(

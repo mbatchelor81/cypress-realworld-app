@@ -478,37 +478,46 @@ export const createSeedNotifications = (
       const transactionsWithComments = getTransactionsWithComments(transactions, seedComments);
 
       const likeTransaction = sample(compact(getRandomTransactions(5, transactionsWithLikes)));
-      const like = getLikeByTransactionId(likeTransaction!.id, seedLikes);
-      const likeNotification = createFakeLikeNotification(user.id, likeTransaction!.id, like!.id);
+      const likeNotifications: NotificationType[] = [];
+      if (likeTransaction) {
+        const like = getLikeByTransactionId(likeTransaction.id, seedLikes);
+        if (like) {
+          likeNotifications.push(createFakeLikeNotification(user.id, likeTransaction.id, like.id));
+        }
+      }
 
       const commentTransaction = sample(
         compact(getRandomTransactions(5, transactionsWithComments))
       );
-      const comment = getCommentByTransactionId(commentTransaction!.id, seedComments);
-      // comment notification
-      const commentNotification = createFakeCommentNotification(
-        user.id,
-        commentTransaction!.id,
-        comment!.id
-      );
+      const commentNotifications: NotificationType[] = [];
+      if (commentTransaction) {
+        const comment = getCommentByTransactionId(commentTransaction.id, seedComments);
+        if (comment) {
+          commentNotifications.push(
+            createFakeCommentNotification(user.id, commentTransaction.id, comment.id)
+          );
+        }
+      }
 
       // choose random transactions
-      const randomTransactions = getRandomTransactions(notificationsPerUser - 2, transactions);
+      const randomTransactions = compact(
+        getRandomTransactions(notificationsPerUser - 2, transactions)
+      );
 
       const paymentRequestNotifications = randomTransactions.map((transaction) =>
-        createFakePaymentNotification(user.id, transaction!, PaymentNotificationStatus.requested)
+        createFakePaymentNotification(user.id, transaction, PaymentNotificationStatus.requested)
       );
 
       const paymentReceivedNotifications = randomTransactions.map((transaction) =>
-        createFakePaymentNotification(user.id, transaction!, PaymentNotificationStatus.received)
+        createFakePaymentNotification(user.id, transaction, PaymentNotificationStatus.received)
       );
 
-      let allNotifications = [likeNotification, commentNotification];
-
-      return flattenDeep(
-        // @ts-ignore
-        concat(allNotifications, [paymentRequestNotifications, paymentReceivedNotifications])
-      ) as NotificationType[];
+      return [
+        ...likeNotifications,
+        ...commentNotifications,
+        ...paymentRequestNotifications,
+        ...paymentReceivedNotifications,
+      ] as NotificationType[];
     })(seedUsers)
   );
 
