@@ -43,7 +43,7 @@ interface NumberFormatCustomProps {
   onChange: (event: { target: { value: string } }) => void;
 }
 
-function NumberFormatCustom(props: NumberFormatCustomProps) {
+function NumberFormatCustom(props: Readonly<NumberFormatCustomProps>) {
   const { inputRef, onChange, ...other } = props;
 
   return (
