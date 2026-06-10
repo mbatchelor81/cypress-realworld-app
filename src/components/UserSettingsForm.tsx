@@ -26,8 +26,8 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
   marginTop: theme.spacing(1),
 }));
 
-// Phone number: starts with a digit or "+", followed by digits/spaces/hyphens, and ends with a digit.
-const phoneRegExp = /^[\d+][\d -]{5,}\d$/;
+// Phone number: optional leading "+", then at least 7 digits separated by optional spaces/hyphens.
+const phoneRegExp = /^\+?(?:[\d -]*\d){7,}$/;
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
 
