@@ -5,6 +5,7 @@ import { useActor, useMachine } from "@xstate/react";
 import { CssBaseline } from "@mui/material";
 // @ts-ignore
 import { LoginCallback, SecureRoute, useOktaAuth, withOktaAuth } from "@okta/okta-react";
+import type { UserClaims } from "@okta/okta-auth-js";
 import { Route } from "react-router-dom";
 
 import { snackbarMachine } from "../machines/snackbarMachine";
@@ -59,7 +60,7 @@ const AppOkta: React.FC = () => {
 
   useEffect(() => {
     if (!isProgrammaticCypress && oktaAuthState.isAuthenticated) {
-      oktaAuthService.getUser().then((user: any) => {
+      oktaAuthService.getUser().then((user: UserClaims) => {
         authService.send("OKTA", { user, token: oktaAuthState.accessToken });
       });
     }
