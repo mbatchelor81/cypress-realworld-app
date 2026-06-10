@@ -25,7 +25,10 @@ backend/
 ├── contact-routes.ts          # /contacts endpoints
 ├── notification-routes.ts     # /notifications endpoints
 ├── like-routes.ts             # /likes endpoints
-└── comment-routes.ts          # /comments endpoints
+├── comment-routes.ts          # /comments endpoints
+├── testdata-routes.ts         # /testdata endpoints (no auth — dev/test only)
+├── gql-playground-routes.ts   # GraphQL Playground route
+└── graphql/                   # GraphQL schema and resolvers
 ```
 
 ## Steps
@@ -62,7 +65,7 @@ const createResource = async (payload: NewResourcePayload) => {
   const id = shortid();
   const { data, error } = await supabase
     .from("resources")
-    .insert({ id, ...payload, createdAt: new Date(), modifiedAt: new Date() })
+    .insert({ id, uuid: v4(), ...payload, createdAt: new Date(), modifiedAt: new Date() })
     .select()
     .single();
   if (error) throw error;
@@ -89,8 +92,7 @@ Create `backend/<resource>-routes.ts`. Use `validateMiddleware` from `helpers.ts
 
 ```typescript
 import express from "express";
-import { ensureAuthenticated } from "./auth";
-import { validateMiddleware } from "./helpers";
+import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { isResourcePayloadValidator } from "./validators";
 
 const router = express.Router();
@@ -138,7 +140,7 @@ yarn lint
 ## Patterns to Follow
 
 - **Authentication**: All mutation endpoints use `ensureAuthenticated` middleware
-- **IDs**: Generate with `shortid()` — never auto-increment
+- **IDs**: Generate with `shortid()` for `id` and `v4()` for `uuid` — every entity needs both
 - **Timestamps**: Always set `createdAt` and `modifiedAt` on create, update `modifiedAt` on update
 - **Error handling**: Return appropriate HTTP status codes (400, 404, 422)
 - **Supabase client**: Import from `backend/supabase-client.ts`
