@@ -1,7 +1,6 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
-import { Button, Typography, Grid, Avatar, Paper, IconButton } from "@mui/material";
-import { AvatarGroup } from "@mui/material";
+import { Button, Typography, Grid, Avatar, Paper, IconButton, AvatarGroup } from "@mui/material";
 import { ThumbUpAltOutlined as LikeIcon, CommentRounded as CommentIcon } from "@mui/icons-material";
 import { TransactionResponseItem, TransactionRequestStatus, User } from "../models";
 import CommentForm from "./CommentForm";
