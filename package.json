@@ -169,7 +169,7 @@
     "test:unit:ci": "vitest --run",
     "test:component:ci": "yarn cypress:run:component",
     "start:api": "yarn tsnode --files backend/server.cts",
-    "start:api:watch": "nodemon --exec yarn tsnode --watch 'backend' backend/server.cts",
+    "start:api:watch": "nodemon --ext ts,cts --exec yarn tsnode --watch 'backend' backend/server.cts",
     "start:react:proxy-server": "yarn tsnode scripts/testServer.ts",
     "prettier": "prettier --write \"**/**.{ts,js,tsx}\" \"*.{json,md,yml}\"",
     "tsnode": "nyc --silent ts-node -P tsconfig.tsnode.json",
