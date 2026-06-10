@@ -52,7 +52,7 @@ ORDER BY transaction_count DESC
 ### Transaction Volume by Status
 ```sql
 SELECT status, "requestStatus", COUNT(*) as count,
-  SUM(amount) as total_amount, AVG(amount) as avg_amount
+  SUM(amount)/100.0 as total_amount_dollars, AVG(amount)/100.0 as avg_amount_dollars
 FROM transactions
 GROUP BY status, "requestStatus"
 ```
@@ -63,20 +63,22 @@ SELECT
   CASE WHEN "requestStatus" IS NULL OR "requestStatus" = '' THEN 'payment'
        ELSE 'request' END as type,
   COUNT(*) as count,
-  SUM(amount) as total_volume
+  SUM(amount)/100.0 as total_volume_dollars
 FROM transactions
 GROUP BY type
 ```
 
 ### Balance Reconciliation Check
 ```sql
-SELECT u.username, u.balance,
-  COALESCE(sent.total, 0) as total_sent,
-  COALESCE(received.total, 0) as total_received,
-  u.balance - (COALESCE(received.total, 0) - COALESCE(sent.total, 0)) as discrepancy
+SELECT u.username, u.balance/100.0 as balance_dollars,
+  COALESCE(sent.total, 0)/100.0 as total_sent,
+  COALESCE(received.total, 0)/100.0 as total_received,
+  COALESCE(deposits.total, 0)/100.0 as total_deposits,
+  (u.balance - (COALESCE(received.total, 0) - COALESCE(sent.total, 0) + COALESCE(deposits.total, 0)))/100.0 as discrepancy
 FROM users u
 LEFT JOIN (SELECT "senderId", SUM(amount) as total FROM transactions WHERE status = 'complete' GROUP BY "senderId") sent ON u.id = sent."senderId"
 LEFT JOIN (SELECT "receiverId", SUM(amount) as total FROM transactions WHERE status = 'complete' GROUP BY "receiverId") received ON u.id = received."receiverId"
+LEFT JOIN (SELECT "userId", SUM(amount) as total FROM banktransfers GROUP BY "userId") deposits ON u.id = deposits."userId"
 ```
 
 ## Steps for Any Data Analysis Task

@@ -72,24 +72,26 @@ const createResource = async (payload: NewResourcePayload) => {
 
 ### 3. Add input validation
 
-Add validators in `backend/validators.ts`:
+Add validators in `backend/validators.ts` using `express-validator` (the project standard):
 
 ```typescript
-export const isValidResourcePayload = (payload: any): boolean => {
-  return (
-    typeof payload.fieldName === "string" &&
-    payload.fieldName.length > 0
-  );
-};
+import { body } from "express-validator";
+
+export const isResourcePayloadValidator = [
+  body("fieldName").isString().trim().notEmpty(),
+  body("optionalField").optional({ checkFalsy: true }).isNumeric(),
+];
 ```
 
 ### 4. Create the route file
 
-Create `backend/<resource>-routes.ts`:
+Create `backend/<resource>-routes.ts`. Use `validateMiddleware` from `helpers.ts` to wire up validation:
 
 ```typescript
 import express from "express";
 import { ensureAuthenticated } from "./auth";
+import { validateMiddleware } from "./helpers";
+import { isResourcePayloadValidator } from "./validators";
 
 const router = express.Router();
 
@@ -99,8 +101,7 @@ router.get("/", ensureAuthenticated, async (req, res) => {
   // ... query and return data
 });
 
-router.post("/", ensureAuthenticated, async (req, res) => {
-  // Validate input
+router.post("/", ensureAuthenticated, validateMiddleware(isResourcePayloadValidator), async (req, res) => {
   // Create resource
   // Return 201 with created resource
 });
