@@ -27,7 +27,9 @@ const MarginHonoringDiv = styled("div")(({ theme }) => ({
 }));
 
 // Phone number: optional leading "+", then at least 7 digits separated by optional spaces/hyphens.
-const phoneRegExp = /^\+?(?:[\d -]*\d){7,}$/;
+// Separators ([ -]) and digits (\d) are disjoint character classes, so there is no overlapping
+// quantifier and the pattern matches in linear time (no catastrophic backtracking / ReDoS).
+const phoneRegExp = /^\+?(?:[ -]*\d){7,}$/;
 
 const DefaultPrivacyLevelValues = Object.values(DefaultPrivacyLevel);
 
