@@ -54,7 +54,11 @@ const AppOkta: React.FC = () => {
         user: okta.user,
         token: okta.token,
       });
-    } else if (oktaAuthState.isAuthenticated) {
+    }
+  }, [isProgrammaticCypress]);
+
+  useEffect(() => {
+    if (!isProgrammaticCypress && oktaAuthState.isAuthenticated) {
       oktaAuthService.getUser().then((user: any) => {
         authService.send("OKTA", { user, token: oktaAuthState.accessToken });
       });

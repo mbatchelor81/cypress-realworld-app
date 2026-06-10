@@ -39,6 +39,22 @@ const Root = styled("div")(({ theme }) => ({
 }));
 
 /* istanbul ignore next */
+const GoogleLoginHandler: React.FC = () => {
+  useGoogleLogin({
+    clientId: process.env.VITE_GOOGLE_CLIENTID!,
+    onSuccess: (res) => {
+      console.log("onSuccess", res);
+      // @ts-ignore
+      authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
+    },
+    cookiePolicy: "single_host_origin",
+    isSignedIn: true,
+  });
+
+  return null;
+};
+
+/* istanbul ignore next */
 const AppGoogle: React.FC = () => {
   const [authState] = useActor(authService);
   const [, , notificationsService] = useMachine(notificationsMachine);
@@ -60,22 +76,13 @@ const AppGoogle: React.FC = () => {
     }
   }, [isCypress]);
 
-  useGoogleLogin({
-    clientId: process.env.VITE_GOOGLE_CLIENTID!,
-    onSuccess: (res) => {
-      console.log("onSuccess", res);
-      // @ts-ignore
-      authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
-    },
-    cookiePolicy: "single_host_origin",
-    isSignedIn: !isCypress,
-  });
-
   const isLoggedIn = authState.matches("authorized");
 
   return (
     <Root className={classes.root}>
       <CssBaseline />
+
+      {!isCypress && <GoogleLoginHandler />}
 
       {isLoggedIn && (
         <PrivateRoutesContainer
