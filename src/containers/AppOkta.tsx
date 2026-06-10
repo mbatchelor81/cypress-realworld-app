@@ -27,10 +27,10 @@ const Root = styled("div")(({ theme }) => ({
 }));
 
 // @ts-ignore
-if (window.Cypress) {
+if (globalThis.Cypress) {
   // Expose authService on window for Cypress
   // @ts-ignore
-  window.authService = authService;
+  globalThis.authService = authService;
 }
 
 /* istanbul ignore next */
@@ -45,7 +45,7 @@ const AppOkta: React.FC = () => {
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
   // @ts-ignore
-  if (window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
+  if (globalThis.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
     useEffect(() => {
       const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
       authService.send("OKTA", {
@@ -95,5 +95,5 @@ const AppOkta: React.FC = () => {
 
 let appOkta =
   //@ts-ignore
-  window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC ? AppOkta : withOktaAuth(AppOkta);
+  globalThis.Cypress && process.env.VITE_OKTA_PROGRAMMATIC ? AppOkta : withOktaAuth(AppOkta);
 export default appOkta;

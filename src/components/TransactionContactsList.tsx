@@ -24,9 +24,9 @@ const TransactionContactsList: React.FC<TransactionContactListProps> = ({
   const { pageData, results } = current.context;
 
   // @ts-ignore
-  if (window.Cypress) {
+  if (globalThis.Cypress) {
     // @ts-ignore
-    window.contactTransactionService = contactTransactionService;
+    globalThis.contactTransactionService = contactTransactionService;
   }
 
   useEffect(() => {
