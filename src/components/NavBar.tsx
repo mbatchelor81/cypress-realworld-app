@@ -186,7 +186,7 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
           </Badge>
         </IconButton>
       </Toolbar>
-      {(match.pathname === "/" || RegExp("/(?:public|contacts|personal)").test(match.pathname)) && (
+      {(match.pathname === "/" || /\/(?:public|contacts|personal)/.test(match.pathname)) && (
         <TransactionNavTabs />
       )}
     </StyledAppBar>
