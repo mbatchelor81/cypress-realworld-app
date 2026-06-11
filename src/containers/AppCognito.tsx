@@ -59,7 +59,7 @@ const AppCognito: React.FC = /* istanbul ignore next */ () => {
             email: tokens!.idToken!.payload.email,
           });
         } else {
-          void signInWithRedirect();
+          signInWithRedirect().catch((err) => console.error(err));
         }
       });
     }
