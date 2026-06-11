@@ -57,9 +57,10 @@ router.get(
     // Permission: account owner
     /* istanbul ignore next */
     if (!isEqual(userId, req.user?.id)) {
-      return res.status(401).send({
+      res.status(401).send({
         error: "Unauthorized",
       });
+      return;
     }
 
     const user = await getUserById(userId);
