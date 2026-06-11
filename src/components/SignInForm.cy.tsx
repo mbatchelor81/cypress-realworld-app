@@ -1,5 +1,6 @@
 import { interpret } from "xstate";
 import { MemoryRouter } from "react-router-dom";
+import bcrypt from "bcryptjs";
 import SignInForm from "./SignInForm";
 import { authMachine } from "../machines/authMachine";
 
@@ -17,7 +18,7 @@ describe("SignInForm", () => {
         firstName: "Edgar",
         lastName: "Johns",
         username: "Katharina_Bernier",
-        password: "$2a$10$5PXHGtcsckWtAprT5/JmluhR13f16BL8SIGhvAKNP.Dhxkt69FfzW",
+        password: bcrypt.hashSync("s3cret", 10),
         email: "Norene39@yahoo.com",
         phoneNumber: "625-316-9882",
         avatar: "https://cypress-realworld-app-svgs.s3.amazonaws.com/t45AiwidW.svg",
