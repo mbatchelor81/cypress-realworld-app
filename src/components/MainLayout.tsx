@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { styled } from "@mui/material/styles";
-import { useMachine } from "@xstate/react";
+import { useActor, useMachine } from "@xstate/react";
 import {
   BaseActionObject,
   Interpreter,
@@ -15,6 +15,7 @@ import NavBar from "./NavBar";
 import NavDrawer from "./NavDrawer";
 import { DataContext, DataEvents, DataSchema } from "../machines/dataMachine";
 import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../machines/authMachine";
+import { WebSocketContext, WebSocketSchema, WebSocketEvents } from "../machines/webSocketMachine";
 import { drawerMachine } from "../machines/drawerMachine";
 
 const PREFIX = "MainLayout";
@@ -67,10 +68,18 @@ interface Props {
     any,
     ResolveTypegenMeta<TypegenDisabled, DataEvents, BaseActionObject, ServiceMap>
   >;
+  webSocketService: Interpreter<
+    WebSocketContext,
+    WebSocketSchema,
+    WebSocketEvents,
+    any,
+    ResolveTypegenMeta<TypegenDisabled, WebSocketEvents, BaseActionObject, ServiceMap>
+  >;
 }
 
-const MainLayout: React.FC<Props> = ({ children, notificationsService, authService }) => {
+const MainLayout: React.FC<Props> = ({ children, notificationsService, authService, webSocketService }) => {
   const theme = useTheme();
+  const [wsState] = useActor(webSocketService);
   const [drawerState, sendDrawer] = useMachine(drawerMachine);
 
   const aboveSmallBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
@@ -100,6 +109,7 @@ const MainLayout: React.FC<Props> = ({ children, notificationsService, authServi
         toggleDrawer={xsBreakpoint ? toggleMobileDrawer : toggleDesktopDrawer}
         drawerOpen={xsBreakpoint ? mobileDrawerOpen : desktopDrawerOpen}
         notificationsService={notificationsService}
+        hasNewNotifications={wsState.context.notificationVersion > 0}
       />
       <NavDrawer
         toggleDrawer={xsBreakpoint ? toggleMobileDrawer : toggleDesktopDrawer}

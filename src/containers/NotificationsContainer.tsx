@@ -13,6 +13,7 @@ import { NotificationUpdatePayload } from "../models";
 import NotificationList from "../components/NotificationList";
 import { DataContext, DataSchema, DataEvents } from "../machines/dataMachine";
 import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../machines/authMachine";
+import { WebSocketContext, WebSocketSchema, WebSocketEvents } from "../machines/webSocketMachine";
 
 const PREFIX = "NotificationsContainer";
 
@@ -39,15 +40,27 @@ export interface Props {
     any,
     ResolveTypegenMeta<TypegenDisabled, DataEvents, BaseActionObject, ServiceMap>
   >;
+  webSocketService: Interpreter<
+    WebSocketContext,
+    WebSocketSchema,
+    WebSocketEvents,
+    any,
+    ResolveTypegenMeta<TypegenDisabled, WebSocketEvents, BaseActionObject, ServiceMap>
+  >;
 }
 
-const NotificationsContainer: React.FC<Props> = ({ authService, notificationsService }) => {
+const NotificationsContainer: React.FC<Props> = ({ authService, notificationsService, webSocketService }) => {
   const [authState] = useActor(authService);
   const [notificationsState, sendNotifications] = useActor(notificationsService);
+  const [, sendWs] = useActor(webSocketService);
 
   useEffect(() => {
     sendNotifications({ type: "FETCH" });
   }, [authState, sendNotifications]);
+
+  useEffect(() => {
+    sendWs({ type: "CLEAR_NEW_NOTIFICATIONS" });
+  }, [sendWs]);
 
   const updateNotification = (payload: NotificationUpdatePayload) =>
     sendNotifications({ type: "UPDATE", ...payload });

@@ -45,6 +45,7 @@ const classes = {
   logo: `${PREFIX}-logo`,
   newTransactionButton: `${PREFIX}-newTransactionButton`,
   customBadge: `${PREFIX}-customBadge`,
+  pulseBadge: `${PREFIX}-pulseBadge`,
 };
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -100,6 +101,16 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
     backgroundColor: "red",
     color: "white",
   },
+
+  [`& .${classes.pulseBadge}`]: {
+    animation: "pulse 1s ease-in-out infinite",
+  },
+
+  "@keyframes pulse": {
+    "0%": { transform: "scale(1)" },
+    "50%": { transform: "scale(1.4)" },
+    "100%": { transform: "scale(1)" },
+  },
 }));
 
 interface NavBarProps {
@@ -112,9 +123,15 @@ interface NavBarProps {
     any,
     ResolveTypegenMeta<TypegenDisabled, DataEvents, BaseActionObject, ServiceMap>
   >;
+  hasNewNotifications: boolean;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notificationsService }) => {
+const NavBar: React.FC<NavBarProps> = ({
+  drawerOpen,
+  toggleDrawer,
+  notificationsService,
+  hasNewNotifications,
+}) => {
   const match = useLocation();
 
   const theme = useTheme();
@@ -180,7 +197,9 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
           <Badge
             badgeContent={allNotifications ? allNotifications.length : undefined}
             data-test="nav-top-notifications-count"
-            classes={{ badge: classes.customBadge }}
+            classes={{
+              badge: clsx(classes.customBadge, hasNewNotifications && classes.pulseBadge),
+            }}
           >
             <NotificationsIcon />
           </Badge>

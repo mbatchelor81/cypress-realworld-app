@@ -55,6 +55,7 @@ import {
 import { DbSchema } from "../src/models/db-schema";
 import { supabase } from "./supabase-client";
 import { buildDatabase } from "../scripts/seedDataUtils";
+import { broadcastToUser } from "./websocket-server";
 
 export type TDatabase = {
   users: User[];
@@ -745,6 +746,7 @@ export const createPaymentNotification = async (
   };
 
   throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
+  broadcastToUser(userId, { type: "NOTIFICATION_CREATED", notification });
   return notification;
 };
 
@@ -765,6 +767,7 @@ export const createLikeNotification = async (
   };
 
   throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
+  broadcastToUser(userId, { type: "NOTIFICATION_CREATED", notification });
   return notification;
 };
 
@@ -785,6 +788,7 @@ export const createCommentNotification = async (
   };
 
   throwIfError(await supabase.from(NOTIFICATION_TABLE).insert(notification));
+  broadcastToUser(userId, { type: "NOTIFICATION_CREATED", notification });
   return notification;
 };
 

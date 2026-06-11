@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { styled } from "@mui/material/styles";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { useActor, useMachine } from "@xstate/react";
@@ -11,7 +11,9 @@ import AlertBar from "../components/AlertBar";
 import SignInForm from "../components/SignInForm";
 import SignUpForm from "../components/SignUpForm";
 import { bankAccountsMachine } from "../machines/bankAccountsMachine";
+import { webSocketMachine } from "../machines/webSocketMachine";
 import PrivateRoutesContainer from "./PrivateRoutesContainer";
+import { backendPort } from "../utils/portUtils";
 
 const PREFIX = "App";
 
@@ -34,16 +36,32 @@ if (window.Cypress) {
 
 const App: React.FC = () => {
   const [authState] = useActor(authService);
-  const [, , notificationsService] = useMachine(notificationsMachine);
+  const [, sendNotifications, notificationsService] = useMachine(notificationsMachine);
 
   const [, , snackbarService] = useMachine(snackbarMachine);
 
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
+  const [wsState, sendWs, webSocketService] = useMachine(webSocketMachine);
+
   const isLoggedIn =
     authState.matches("authorized") ||
     authState.matches("refreshing") ||
     authState.matches("updating");
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      sendWs({ type: "CONNECT", url: `ws://localhost:${backendPort}/ws` });
+    } else {
+      sendWs({ type: "DISCONNECT" });
+    }
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (wsState.context.notificationVersion > 0) {
+      sendNotifications({ type: "FETCH" });
+    }
+  }, [wsState.context.notificationVersion]);
 
   return (
     <Root className={classes.root}>
@@ -56,6 +74,7 @@ const App: React.FC = () => {
           authService={authService}
           snackbarService={snackbarService}
           bankAccountsService={bankAccountsService}
+          webSocketService={webSocketService}
         />
       )}
       {authState.matches("unauthorized") && (

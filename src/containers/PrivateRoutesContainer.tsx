@@ -18,6 +18,7 @@ import TransactionDetailContainer from "./TransactionDetailContainer";
 import { DataContext, DataSchema, DataEvents } from "../machines/dataMachine";
 import { AuthMachineContext, AuthMachineEvents, AuthMachineSchema } from "../machines/authMachine";
 import { SnackbarContext, SnackbarSchema, SnackbarEvents } from "../machines/snackbarMachine";
+import { WebSocketContext, WebSocketSchema, WebSocketEvents } from "../machines/webSocketMachine";
 import { useActor } from "@xstate/react";
 import UserOnboardingContainer from "./UserOnboardingContainer";
 
@@ -45,6 +46,13 @@ export interface Props {
     any,
     ResolveTypegenMeta<TypegenDisabled, DataEvents, BaseActionObject, ServiceMap>
   >;
+  webSocketService: Interpreter<
+    WebSocketContext,
+    WebSocketSchema,
+    WebSocketEvents,
+    any,
+    ResolveTypegenMeta<TypegenDisabled, WebSocketEvents, BaseActionObject, ServiceMap>
+  >;
 }
 
 const PrivateRoutesContainer: React.FC<Props> = ({
@@ -53,6 +61,7 @@ const PrivateRoutesContainer: React.FC<Props> = ({
   notificationsService,
   snackbarService,
   bankAccountsService,
+  webSocketService,
 }) => {
   const [, sendNotifications] = useActor(notificationsService);
 
@@ -61,7 +70,7 @@ const PrivateRoutesContainer: React.FC<Props> = ({
   }, [sendNotifications]);
 
   return (
-    <MainLayout notificationsService={notificationsService} authService={authService}>
+    <MainLayout notificationsService={notificationsService} authService={authService} webSocketService={webSocketService}>
       <UserOnboardingContainer
         authService={authService}
         bankAccountsService={bankAccountsService}
@@ -77,6 +86,7 @@ const PrivateRoutesContainer: React.FC<Props> = ({
           <NotificationsContainer
             authService={authService}
             notificationsService={notificationsService}
+            webSocketService={webSocketService}
           />
         </PrivateRoute>
         <PrivateRoute isLoggedIn={isLoggedIn} path="/bankaccounts*">
