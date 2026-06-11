@@ -1,14 +1,6 @@
 import bcrypt from "bcryptjs";
 import { v4 } from "uuid";
-import {
-  uniqBy,
-  map,
-  sample,
-  orderBy,
-  flatMap,
-  get,
-  remove,
-} from "lodash/fp";
+import { uniqBy, map, sample, orderBy, flatMap, get, remove } from "lodash/fp";
 import { isWithinInterval } from "date-fns";
 import shortid from "shortid";
 import {
@@ -458,7 +450,10 @@ export const getTransactionsForUserContacts = async (
   const results = await Promise.all(
     contactIds.map((contactId) => getTransactionsForUserForApi(contactId, query))
   );
-  return uniqBy("id", flatMap((x: TransactionResponseItem[]) => x, results));
+  return uniqBy(
+    "id",
+    flatMap((x: TransactionResponseItem[]) => x, results)
+  );
 };
 
 export const getTransactionIds = (transactions: Transaction[]) => map("id", transactions);
@@ -499,7 +494,7 @@ export const getPublicTransactionsByQuery = async (
       getNonContactPublicTransactionsForApi(userId),
     ]);
 
-    let filteredPublic = nonContactPublic as TransactionResponseItem[];
+    let filteredPublic = nonContactPublic;
 
     if (dateRangeStart && dateRangeEnd) {
       filteredPublic = filteredPublic.filter((t) =>
@@ -511,9 +506,7 @@ export const getPublicTransactionsByQuery = async (
     }
 
     if (amountMin && amountMax) {
-      filteredPublic = filteredPublic.filter(
-        (t) => t.amount >= amountMin && t.amount <= amountMax
-      );
+      filteredPublic = filteredPublic.filter((t) => t.amount >= amountMin && t.amount <= amountMax);
     }
 
     return { contactsTransactions, publicTransactions: filteredPublic };
@@ -596,10 +589,7 @@ export const createTransaction = async (
   return savedTransaction;
 };
 
-export const updateTransactionById = async (
-  transactionId: string,
-  edits: Partial<Transaction>
-) => {
+export const updateTransactionById = async (transactionId: string, edits: Partial<Transaction>) => {
   const transaction = (await getTransactionBy("id", transactionId)) as Transaction;
   const { senderId, receiverId } = transaction;
   const sender = await getUserById(senderId);
@@ -648,7 +638,7 @@ export const createLike = async (userId: string, transactionId: string): Promise
   };
 
   throwIfError(await supabase.from(LIKE_TABLE).insert(like));
-  return (await getLikeById(like.id)) as Like;
+  return await getLikeById(like.id);
 };
 
 export const createLikes = async (userId: string, transactionId: string) => {
@@ -695,7 +685,7 @@ export const createComment = async (
   };
 
   throwIfError(await supabase.from(COMMENT_TABLE).insert(comment));
-  return (await getCommentById(comment.id)) as Comment;
+  return await getCommentById(comment.id);
 };
 
 export const createComments = async (userId: string, transactionId: string, content: string) => {
@@ -801,9 +791,7 @@ export const createNotifications = async (
     } else {
       /* istanbul ignore next */
       if ("commentId" in item) {
-        results.push(
-          await createCommentNotification(userId, item.transactionId, item.commentId)
-        );
+        results.push(await createCommentNotification(userId, item.transactionId, item.commentId));
       }
     }
   }
@@ -892,8 +880,7 @@ export const getNotificationById = async (id: string): Promise<NotificationType>
   getNotificationBy("id", id);
 
 /* istanbul ignore next */
-export const getNotificationsByUserId = async (userId: string) =>
-  getNotificationsByObj({ userId });
+export const getNotificationsByUserId = async (userId: string) => getNotificationsByObj({ userId });
 
 /* istanbul ignore next */
 export const getBankTransferByTransactionId = async (transactionId: string) =>
