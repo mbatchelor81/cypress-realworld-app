@@ -120,6 +120,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
-getBackendPort().then((port) => {
+async function startServer() {
+  const port = await getBackendPort();
   app.listen(port);
-});
+}
+
+startServer();
