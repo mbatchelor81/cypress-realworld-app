@@ -93,7 +93,7 @@ const AppOkta: React.FC = () => {
   );
 };
 
-let appOkta =
+const appOkta =
   //@ts-ignore
   window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC ? AppOkta : withOktaAuth(AppOkta);
 export default appOkta;
