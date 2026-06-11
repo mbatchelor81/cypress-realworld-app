@@ -12,6 +12,7 @@ import {
   shortIdValidation,
   isNotificationPatchValidator,
 } from "./validators";
+import { emitNotificationReceived } from "./websocket-server";
 const router = express.Router();
 
 // Routes
@@ -34,6 +35,10 @@ router.post(
     const { items } = req.body;
     /* istanbul ignore next */
     const notifications = await createNotifications(req.user?.id!, items);
+
+    notifications.forEach((notification) => {
+      emitNotificationReceived(notification.id, notification.userId);
+    });
 
     res.status(200);
     // @ts-ignore

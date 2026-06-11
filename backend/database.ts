@@ -651,7 +651,7 @@ export const createLike = async (userId: string, transactionId: string): Promise
   return (await getLikeById(like.id)) as Like;
 };
 
-export const createLikes = async (userId: string, transactionId: string) => {
+export const createLikes = async (userId: string, transactionId: string): Promise<Like> => {
   const transaction = await getTransactionById(transactionId);
   const { senderId, receiverId } = transaction;
 
@@ -666,6 +666,8 @@ export const createLikes = async (userId: string, transactionId: string) => {
   } else {
     await createLikeNotification(receiverId, transactionId, like.id);
   }
+
+  return like;
 };
 
 // Comments
@@ -698,7 +700,7 @@ export const createComment = async (
   return (await getCommentById(comment.id)) as Comment;
 };
 
-export const createComments = async (userId: string, transactionId: string, content: string) => {
+export const createComments = async (userId: string, transactionId: string, content: string): Promise<Comment> => {
   const transaction = await getTransactionById(transactionId);
   const { senderId, receiverId } = transaction;
 
@@ -713,6 +715,8 @@ export const createComments = async (userId: string, transactionId: string, cont
   } else {
     await createCommentNotification(receiverId, transactionId, comment.id);
   }
+
+  return comment;
 };
 
 // Notifications

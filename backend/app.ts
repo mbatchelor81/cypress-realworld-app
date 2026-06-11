@@ -1,4 +1,5 @@
 import express from "express";
+import { createServer } from "http";
 import { join } from "path";
 import logger from "morgan";
 import passport from "passport";
@@ -26,8 +27,11 @@ import testDataRoutes from "./testdata-routes";
 import { checkAuth0Jwt, verifyOktaToken, checkCognitoJwt, checkGoogleJwt } from "./helpers";
 import resolvers from "./graphql/resolvers";
 import { frontendPort, getBackendPort } from "../src/utils/portUtils";
+import { initWebSocketServer } from "./websocket-server";
 
 require("dotenv").config();
+
+const sessionSecret = process.env.SESSION_SECRET || "session secret";
 
 const corsOption = {
   origin: `http://localhost:${frontendPort}`,
@@ -56,14 +60,13 @@ app.use(logger("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(
-  session({
-    secret: "session secret",
-    resave: false,
-    saveUninitialized: false,
-    unset: "destroy",
-  })
-);
+const sessionMiddleware = session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  unset: "destroy",
+});
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -120,6 +123,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
+const httpServer = createServer(app);
+initWebSocketServer(httpServer, sessionMiddleware);
+
 getBackendPort().then((port) => {
-  app.listen(port);
+  httpServer.listen(port);
 });

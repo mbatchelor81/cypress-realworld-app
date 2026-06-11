@@ -6,12 +6,14 @@ import {
   getTransactionsForUserContacts,
   createTransaction,
   updateTransactionById,
+  getTransactionById,
   getPublicTransactionsDefaultSort,
   getTransactionByIdForApi,
   getTransactionsForUserForApi,
   getPublicTransactionsByQuery,
 } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
+import { emitTransactionCreated, emitTransactionUpdated } from "./websocket-server";
 import {
   sanitizeTransactionStatus,
   sanitizeRequestStatus,
@@ -147,6 +149,13 @@ router.post(
     /* istanbul ignore next */
     const transaction = await createTransaction(req.user?.id!, transactionType, transactionPayload);
 
+    emitTransactionCreated(
+      transaction.id,
+      transaction.senderId,
+      transaction.receiverId,
+      transaction.privacyLevel
+    );
+
     res.status(200);
     res.json({ transaction });
   }
@@ -177,6 +186,15 @@ router.patch(
 
     /* istanbul ignore next */
     await updateTransactionById(transactionId, req.body);
+
+    const updatedTransaction = await getTransactionById(transactionId);
+    emitTransactionUpdated(
+      transactionId,
+      updatedTransaction.senderId,
+      updatedTransaction.receiverId,
+      updatedTransaction.status,
+      updatedTransaction.requestStatus as string | undefined
+    );
 
     res.sendStatus(204);
   }

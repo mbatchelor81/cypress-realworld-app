@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { styled } from "@mui/material/styles";
 import { Switch, Route, Redirect } from "react-router-dom";
 import { useActor, useMachine } from "@xstate/react";
@@ -12,6 +12,7 @@ import SignInForm from "../components/SignInForm";
 import SignUpForm from "../components/SignUpForm";
 import { bankAccountsMachine } from "../machines/bankAccountsMachine";
 import PrivateRoutesContainer from "./PrivateRoutesContainer";
+import { connect, disconnect } from "../services/websocketClient";
 
 const PREFIX = "App";
 
@@ -44,6 +45,15 @@ const App: React.FC = () => {
     authState.matches("authorized") ||
     authState.matches("refreshing") ||
     authState.matches("updating");
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      connect();
+    } else {
+      disconnect();
+    }
+    return () => disconnect();
+  }, [isLoggedIn]);
 
   return (
     <Root className={classes.root}>

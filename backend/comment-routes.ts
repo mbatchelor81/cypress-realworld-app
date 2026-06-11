@@ -4,6 +4,7 @@ import express from "express";
 import { getCommentsByTransactionId, createComments } from "./database";
 import { ensureAuthenticated, validateMiddleware } from "./helpers";
 import { shortIdValidation, isCommentValidator } from "./validators";
+import { emitCommentCreated } from "./websocket-server";
 const router = express.Router();
 
 // Routes
@@ -32,7 +33,9 @@ router.post(
     const { content } = req.body;
 
     /* istanbul ignore next */
-    await createComments(req.user?.id!, transactionId, content);
+    const comment = await createComments(req.user?.id!, transactionId, content);
+
+    emitCommentCreated(comment.id, transactionId, req.user?.id!);
 
     res.sendStatus(200);
   }
