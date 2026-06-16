@@ -41,7 +41,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
   [`& .${classes.submit}`]: {
     margin: theme.spacing(3, 0, 2),
   },
-})) as typeof Container;
+}));
 
 const validationSchema = object({
   firstName: string().required("First Name is required"),
