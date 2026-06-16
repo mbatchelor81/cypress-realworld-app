@@ -6,7 +6,7 @@ import { ArrowDropDown as ArrowDropDownIcon, Cancel as CancelIcon } from "@mui/i
 import Calendar from "react-calendar";
 
 import "react-calendar/dist/Calendar.css";
-import { TransactionDateRangePayload, Value, ValuePiece } from "../models";
+import { TransactionDateRangePayload, Value } from "../models";
 import { hasDateQueryFields, localDateToUTCISOString } from "../utils/transactionUtils";
 
 const PREFIX = "TransactionListDateRangeFilter";
