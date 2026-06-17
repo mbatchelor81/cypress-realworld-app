@@ -1,6 +1,12 @@
 import React from "react";
 import { styled } from "@mui/material/styles";
-import { Interpreter } from "xstate";
+import {
+  Interpreter,
+  BaseActionObject,
+  ResolveTypegenMeta,
+  ServiceMap,
+  TypegenDisabled,
+} from "xstate";
 import { useActor } from "@xstate/react";
 import { Link } from "react-router-dom";
 import {
@@ -67,7 +73,13 @@ const StyledContainer = styled(Container)(({ theme }) => ({
 })) as typeof Container;
 
 export interface Props {
-  authService: Interpreter<AuthMachineContext, AuthMachineSchema, AuthMachineEvents, any, any>;
+  authService: Interpreter<
+    AuthMachineContext,
+    AuthMachineSchema,
+    AuthMachineEvents,
+    { value: string; context: AuthMachineContext },
+    ResolveTypegenMeta<TypegenDisabled, AuthMachineEvents, BaseActionObject, ServiceMap>
+  >;
 }
 
 const SignInForm: React.FC<Props> = ({ authService }) => {
