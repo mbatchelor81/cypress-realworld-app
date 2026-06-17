@@ -1,4 +1,5 @@
 import express from "express";
+import { createServer } from "http";
 import { join } from "path";
 import logger from "morgan";
 import passport from "passport";
@@ -26,6 +27,7 @@ import testDataRoutes from "./testdata-routes";
 import { checkAuth0Jwt, verifyOktaToken, checkCognitoJwt, checkGoogleJwt } from "./helpers";
 import resolvers from "./graphql/resolvers";
 import { frontendPort, getBackendPort } from "../src/utils/portUtils";
+import { initNotificationWebSocketServer } from "./notifications-ws";
 
 require("dotenv").config();
 
@@ -56,14 +58,14 @@ app.use(logger("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(
-  session({
-    secret: "session secret",
-    resave: false,
-    saveUninitialized: false,
-    unset: "destroy",
-  })
-);
+const sessionMiddleware = session({
+  secret: "session secret",
+  resave: false,
+  saveUninitialized: false,
+  unset: "destroy",
+});
+
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -120,6 +122,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
+const server = createServer(app);
+initNotificationWebSocketServer(server, sessionMiddleware, passport);
+
 getBackendPort().then((port) => {
-  app.listen(port);
+  server.listen(port);
 });
