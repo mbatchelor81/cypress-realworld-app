@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { styled } from "@mui/material/styles";
-import { useMachine } from "@xstate/react";
+import { useActor, useMachine } from "@xstate/react";
 import {
   BaseActionObject,
   Interpreter,
@@ -72,6 +72,8 @@ interface Props {
 const MainLayout: React.FC<Props> = ({ children, notificationsService, authService }) => {
   const theme = useTheme();
   const [drawerState, sendDrawer] = useMachine(drawerMachine);
+  const [notificationsState] = useActor(notificationsService);
+  const notificationCount = notificationsState?.context?.results?.length ?? 0;
 
   const aboveSmallBreakpoint = useMediaQuery(theme.breakpoints.up("sm"));
   const xsBreakpoint = useMediaQuery(theme.breakpoints.only("xs"));
@@ -106,6 +108,7 @@ const MainLayout: React.FC<Props> = ({ children, notificationsService, authServi
         drawerOpen={xsBreakpoint ? mobileDrawerOpen : desktopDrawerOpen}
         closeMobileDrawer={closeMobileDrawer}
         authService={authService}
+        notificationCount={notificationCount}
       />
       <main className={classes.content} data-test="main">
         <div className={classes.appBarSpacer} />

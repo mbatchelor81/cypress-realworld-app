@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { styled } from "@mui/material/styles";
 import clsx from "clsx";
 import {
@@ -45,6 +45,7 @@ const classes = {
   logo: `${PREFIX}-logo`,
   newTransactionButton: `${PREFIX}-newTransactionButton`,
   customBadge: `${PREFIX}-customBadge`,
+  pulseBadge: `${PREFIX}-pulseBadge`,
 };
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -100,6 +101,18 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
     backgroundColor: "red",
     color: "white",
   },
+
+  [`& .${classes.pulseBadge}`]: {
+    backgroundColor: "red",
+    color: "white",
+    animation: "pulse 1.5s ease-in-out 3",
+  },
+
+  "@keyframes pulse": {
+    "0%": { transform: "scale(1)" },
+    "50%": { transform: "scale(1.4)" },
+    "100%": { transform: "scale(1)" },
+  },
 }));
 
 interface NavBarProps {
@@ -122,6 +135,26 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
 
   const allNotifications = notificationsState?.context?.results;
   const xsBreakpoint = useMediaQuery(theme.breakpoints.only("xs"));
+
+  const [isPulsing, setIsPulsing] = useState(false);
+  const prevCountRef = useRef<number>(0);
+  const hasInitializedRef = useRef(false);
+
+  useEffect(() => {
+    const currentCount = allNotifications?.length ?? 0;
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      prevCountRef.current = currentCount;
+      return;
+    }
+    if (currentCount > prevCountRef.current) {
+      setIsPulsing(true);
+      const timer = setTimeout(() => setIsPulsing(false), 4500);
+      prevCountRef.current = currentCount;
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = currentCount;
+  }, [allNotifications]);
 
   return (
     <StyledAppBar
@@ -180,7 +213,7 @@ const NavBar: React.FC<NavBarProps> = ({ drawerOpen, toggleDrawer, notifications
           <Badge
             badgeContent={allNotifications ? allNotifications.length : undefined}
             data-test="nav-top-notifications-count"
-            classes={{ badge: classes.customBadge }}
+            classes={{ badge: isPulsing ? classes.pulseBadge : classes.customBadge }}
           >
             <NotificationsIcon />
           </Badge>
