@@ -5,7 +5,7 @@ interface IPrivateRouteProps extends RouteProps {
   isLoggedIn: boolean;
 }
 
-function PrivateRoute({ isLoggedIn, children, ...rest }: IPrivateRouteProps) {
+function PrivateRoute({ isLoggedIn, children, ...rest }: Readonly<IPrivateRouteProps>) {
   return (
     <Route
       {...rest}
