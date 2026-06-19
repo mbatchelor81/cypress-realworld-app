@@ -64,7 +64,7 @@ const StyledContainer = styled(Container)(({ theme }) => ({
   [`& .${classes.alertMessage}`]: {
     marginBottom: theme.spacing(2),
   },
-})) as typeof Container;
+}));
 
 export interface Props {
   authService: Interpreter<AuthMachineContext, AuthMachineSchema, AuthMachineEvents, any, any>;
