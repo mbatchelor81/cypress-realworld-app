@@ -55,7 +55,6 @@ export const sanitizeTransactionStatus = sanitizeQuery("status").customSanitizer
   if (includes(value, TransactionStatusValues)) {
     return value;
   }
-  return;
 });
 
 // default request status to undefined if not provided
@@ -64,7 +63,6 @@ export const sanitizeRequestStatus = sanitizeQuery("requestStatus").customSaniti
   if (includes(value, RequestStatusValues)) {
     return value;
   }
-  return;
 });
 
 export const isTransactionQSValidator = [
