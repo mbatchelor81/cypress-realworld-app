@@ -164,13 +164,13 @@ export function RangeCalendar({
   color,
   dataTest,
   defaultValue,
-}: {
+}: Readonly<{
   onCalendarSelect: (value: Value) => void;
   xsBreakpoint: boolean;
   color: Record<string, string>;
   dataTest: string;
   defaultValue: Value;
-}) {
+}>) {
   const [value, setValue] = useState<Value>(defaultValue);
 
   const width = xsBreakpoint ? window.innerWidth : 350;
