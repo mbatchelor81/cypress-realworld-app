@@ -5,6 +5,8 @@ import { history } from "../utils/historyUtils";
 import { User } from "../models";
 import { backendPort } from "../utils/portUtils";
 
+const AUTH_TOKEN_NAME = process.env.VITE_AUTH_TOKEN_NAME ?? "";
+
 export interface AuthMachineSchema {
   states: {
     unauthorized: {};
@@ -175,7 +177,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.token);
+        localStorage.setItem(AUTH_TOKEN_NAME, event.token);
 
         return Promise.resolve({ user });
       },
@@ -194,7 +196,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Google Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.token);
+        localStorage.setItem(AUTH_TOKEN_NAME, event.token);
 
         return Promise.resolve({ user });
       },
@@ -208,7 +210,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Auth0 Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.token);
+        localStorage.setItem(AUTH_TOKEN_NAME, event.token);
 
         return Promise.resolve({ user });
       },
@@ -232,7 +234,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
         };
 
         // Set Access Token in Local Storage for API calls
-        localStorage.setItem(process.env.VITE_AUTH_TOKEN_NAME!, event.accessTokenJwtString);
+        localStorage.setItem(AUTH_TOKEN_NAME, event.accessTokenJwtString);
 
         return Promise.resolve(ourUser);
       },
