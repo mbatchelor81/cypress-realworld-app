@@ -1,5 +1,4 @@
-require("dotenv").config();
-
+import dotenv from "dotenv";
 import shortid from "shortid";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
@@ -45,6 +44,8 @@ import {
   PaymentNotificationStatus,
 } from "../src/models";
 import { getFakeAmount } from "../src/utils/transactionUtils";
+
+dotenv.config();
 
 export const userbaseSize = +process.env.SEED_USERBASE_SIZE!;
 export const contactsPerUser = +process.env.SEED_CONTACTS_PER_USER!;
