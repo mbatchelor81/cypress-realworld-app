@@ -120,6 +120,7 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
-getBackendPort().then((port) => {
+// prettier-ignore
+getBackendPort().then((port) => { // NOSONAR: S7785 — top-level await requires ESM; backend uses CommonJS
   app.listen(port);
 });
