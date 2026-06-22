@@ -11,7 +11,7 @@ const router = express.Router();
 //GET /bankTransfers (scoped-user)
 router.get("/", ensureAuthenticated, async (req, res) => {
   /* istanbul ignore next */
-  const transfers = await getBankTransfersByUserId(req.user?.id!);
+  const transfers = await getBankTransfersByUserId(req.user!.id);
 
   res.status(200);
   res.json({ transfers });

@@ -1,14 +1,6 @@
 import bcrypt from "bcryptjs";
 import { v4 } from "uuid";
-import {
-  uniqBy,
-  map,
-  sample,
-  orderBy,
-  flatMap,
-  get,
-  remove,
-} from "lodash/fp";
+import { uniqBy, map, sample, orderBy, flatMap, get, remove } from "lodash/fp";
 import { isWithinInterval } from "date-fns";
 import shortid from "shortid";
 import {
@@ -124,7 +116,7 @@ export const seedDatabase = async () => {
 export const getAllUsers = async (): Promise<User[]> => {
   const { data, error } = await supabase.from(USER_TABLE).select("*");
   if (error) throw error;
-  return data as User[];
+  return data;
 };
 
 export const getAllPublicTransactions = async (): Promise<Transaction[]> => {
@@ -133,7 +125,7 @@ export const getAllPublicTransactions = async (): Promise<Transaction[]> => {
     .select("*")
     .eq("privacyLevel", DefaultPrivacyLevel.public);
   if (error) throw error;
-  return data as Transaction[];
+  return data;
 };
 
 export const getAllForEntity = async (entity: keyof DbSchema) => {
@@ -179,7 +171,7 @@ export const searchUsers = async (query: string): Promise<User[]> => {
       `firstName.ilike.${pattern},lastName.ilike.${pattern},username.ilike.${pattern},email.ilike.${pattern},phoneNumber.ilike.${pattern}`
     );
   if (error) throw error;
-  return data as User[];
+  return data;
 };
 
 export const removeUserFromResults = (userId: User["id"], results: User[]) =>
@@ -236,7 +228,7 @@ export const getContactsByUsername = async (username: string) => {
 };
 
 export const getContactsByUserId = async (userId: string): Promise<Contact[]> =>
-  (await getContactsBy("userId", userId)) as Contact[];
+  await getContactsBy("userId", userId);
 
 export const createContact = async (contact: Contact) => {
   throwIfError(await supabase.from(CONTACT_TABLE).insert(contact));
@@ -331,7 +323,7 @@ export const createBankTransfer = async (bankTransferDetails: BankTransferPayloa
   };
 
   throwIfError(await supabase.from(BANK_TRANSFER_TABLE).insert(bankTransfer));
-  return (await getBankTransferBy("id", bankTransfer.id)) as BankTransfer;
+  return await getBankTransferBy("id", bankTransfer.id);
 };
 
 // Transaction
@@ -339,11 +331,11 @@ export const createBankTransfer = async (bankTransferDetails: BankTransferPayloa
 export const getTransactionBy = async (key: string, value: any) =>
   getBy(TRANSACTION_TABLE, key, value);
 
-export const getTransactionById = async (id: string) =>
-  (await getTransactionBy("id", id)) as Transaction;
+export const getTransactionById = async (id: string): Promise<Transaction> =>
+  await getTransactionBy("id", id);
 
-export const getTransactionsByObj = async (query: Record<string, any>) =>
-  (await getAllByObj(TRANSACTION_TABLE, query)) as Transaction[];
+export const getTransactionsByObj = async (query: Record<string, any>): Promise<Transaction[]> =>
+  await getAllByObj(TRANSACTION_TABLE, query);
 
 export const getTransactionByIdForApi = async (id: string) => {
   const transaction = await getTransactionBy("id", id);
@@ -458,7 +450,10 @@ export const getTransactionsForUserContacts = async (
   const results = await Promise.all(
     contactIds.map((contactId) => getTransactionsForUserForApi(contactId, query))
   );
-  return uniqBy("id", flatMap((x: TransactionResponseItem[]) => x, results));
+  return uniqBy(
+    "id",
+    flatMap((x: TransactionResponseItem[]) => x, results)
+  );
 };
 
 export const getTransactionIds = (transactions: Transaction[]) => map("id", transactions);
@@ -499,7 +494,7 @@ export const getPublicTransactionsByQuery = async (
       getNonContactPublicTransactionsForApi(userId),
     ]);
 
-    let filteredPublic = nonContactPublic as TransactionResponseItem[];
+    let filteredPublic = nonContactPublic;
 
     if (dateRangeStart && dateRangeEnd) {
       filteredPublic = filteredPublic.filter((t) =>
@@ -511,9 +506,7 @@ export const getPublicTransactionsByQuery = async (
     }
 
     if (amountMin && amountMax) {
-      filteredPublic = filteredPublic.filter(
-        (t) => t.amount >= amountMin && t.amount <= amountMax
-      );
+      filteredPublic = filteredPublic.filter((t) => t.amount >= amountMin && t.amount <= amountMax);
     }
 
     return { contactsTransactions, publicTransactions: filteredPublic };
@@ -571,7 +564,7 @@ export const createTransaction = async (
   };
 
   throwIfError(await supabase.from(TRANSACTION_TABLE).insert(transaction));
-  const savedTransaction = (await getTransactionBy("id", transaction.id)) as Transaction;
+  const savedTransaction = await getTransactionBy("id", transaction.id);
 
   // if payment, debit sender's balance for payment amount
   if (isPayment(transaction)) {
@@ -596,11 +589,8 @@ export const createTransaction = async (
   return savedTransaction;
 };
 
-export const updateTransactionById = async (
-  transactionId: string,
-  edits: Partial<Transaction>
-) => {
-  const transaction = (await getTransactionBy("id", transactionId)) as Transaction;
+export const updateTransactionById = async (transactionId: string, edits: Partial<Transaction>) => {
+  const transaction = await getTransactionBy("id", transactionId);
   const { senderId, receiverId } = transaction;
   const sender = await getUserById(senderId);
   const receiver = await getUserById(receiverId);
@@ -629,9 +619,9 @@ export const updateTransactionById = async (
 // Likes
 
 export const getLikeBy = async (key: string, value: any): Promise<Like> =>
-  (await getBy(LIKE_TABLE, key, value)) as Like;
-export const getLikesByObj = async (query: Record<string, any>) =>
-  (await getAllByObj(LIKE_TABLE, query)) as Like[];
+  await getBy(LIKE_TABLE, key, value);
+export const getLikesByObj = async (query: Record<string, any>): Promise<Like[]> =>
+  await getAllByObj(LIKE_TABLE, query);
 
 export const getLikeById = async (id: string): Promise<Like> => getLikeBy("id", id);
 export const getLikesByTransactionId = async (transactionId: string) =>
@@ -648,7 +638,7 @@ export const createLike = async (userId: string, transactionId: string): Promise
   };
 
   throwIfError(await supabase.from(LIKE_TABLE).insert(like));
-  return (await getLikeById(like.id)) as Like;
+  return await getLikeById(like.id);
 };
 
 export const createLikes = async (userId: string, transactionId: string) => {
@@ -671,9 +661,9 @@ export const createLikes = async (userId: string, transactionId: string) => {
 // Comments
 
 export const getCommentBy = async (key: string, value: any): Promise<Comment> =>
-  (await getBy(COMMENT_TABLE, key, value)) as Comment;
-export const getCommentsByObj = async (query: Record<string, any>) =>
-  (await getAllByObj(COMMENT_TABLE, query)) as Comment[];
+  await getBy(COMMENT_TABLE, key, value);
+export const getCommentsByObj = async (query: Record<string, any>): Promise<Comment[]> =>
+  await getAllByObj(COMMENT_TABLE, query);
 
 export const getCommentById = async (id: string): Promise<Comment> => getCommentBy("id", id);
 export const getCommentsByTransactionId = async (transactionId: string) =>
@@ -695,7 +685,7 @@ export const createComment = async (
   };
 
   throwIfError(await supabase.from(COMMENT_TABLE).insert(comment));
-  return (await getCommentById(comment.id)) as Comment;
+  return await getCommentById(comment.id);
 };
 
 export const createComments = async (userId: string, transactionId: string, content: string) => {
@@ -718,10 +708,11 @@ export const createComments = async (userId: string, transactionId: string, cont
 // Notifications
 
 export const getNotificationBy = async (key: string, value: any): Promise<NotificationType> =>
-  (await getBy(NOTIFICATION_TABLE, key, value)) as NotificationType;
+  await getBy(NOTIFICATION_TABLE, key, value);
 
-export const getNotificationsByObj = async (query: Record<string, any>) =>
-  (await getAllByObj(NOTIFICATION_TABLE, query)) as NotificationType[];
+export const getNotificationsByObj = async (
+  query: Record<string, any>
+): Promise<NotificationType[]> => await getAllByObj(NOTIFICATION_TABLE, query);
 
 export const getUnreadNotificationsByUserId = async (userId: string) => {
   const notifications = await getNotificationsByObj({ userId, isRead: false });
@@ -801,9 +792,7 @@ export const createNotifications = async (
     } else {
       /* istanbul ignore next */
       if ("commentId" in item) {
-        results.push(
-          await createCommentNotification(userId, item.transactionId, item.commentId)
-        );
+        results.push(await createCommentNotification(userId, item.transactionId, item.commentId));
       }
     }
   }
@@ -892,8 +881,7 @@ export const getNotificationById = async (id: string): Promise<NotificationType>
   getNotificationBy("id", id);
 
 /* istanbul ignore next */
-export const getNotificationsByUserId = async (userId: string) =>
-  getNotificationsByObj({ userId });
+export const getNotificationsByUserId = async (userId: string) => getNotificationsByObj({ userId });
 
 /* istanbul ignore next */
 export const getBankTransferByTransactionId = async (transactionId: string) =>
