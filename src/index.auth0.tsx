@@ -24,7 +24,7 @@ const theme = createTheme(
 
 /* istanbul ignore next */
 const onRedirectCallback = (appState: any) => {
-  history.replace((appState && appState.returnTo) || window.location.pathname);
+  history.replace((appState && appState.returnTo) || globalThis.location.pathname);
 };
 
 const root = createRoot(document.getElementById("root")!);
@@ -35,7 +35,7 @@ if (process.env.VITE_AUTH0) {
     <Auth0Provider
       domain={process.env.VITE_AUTH0_DOMAIN!}
       clientId={process.env.VITE_AUTH0_CLIENTID!}
-      redirectUri={window.location.origin}
+      redirectUri={globalThis.location.origin}
       audience={process.env.VITE_AUTH0_AUDIENCE}
       scope={process.env.VITE_AUTH0_SCOPE}
       onRedirectCallback={onRedirectCallback}
