@@ -1,13 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { Router } from "react-router-dom";
-import {
-  createTheme,
-  ThemeProvider,
-  Theme,
-  StyledEngineProvider,
-  adaptV4Theme,
-} from "@mui/material";
+import { createTheme, ThemeProvider, StyledEngineProvider, adaptV4Theme } from "@mui/material";
 import { Auth0Provider } from "@auth0/auth0-react";
 import AppAuth0 from "./containers/AppAuth0";
 import { history } from "./utils/historyUtils";
