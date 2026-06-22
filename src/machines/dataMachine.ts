@@ -113,7 +113,7 @@ export const dataMachine = (machineId: string) =>
       actions: {
         setResults: assign((ctx: DataContext, event: any) => ({
           results:
-            event.data && event.data.pageData && event.data.pageData.page > 1
+            event.data?.pageData?.page && event.data.pageData.page > 1
               ? concat(ctx.results, event.data.results)
               : event.data.results,
         })),
