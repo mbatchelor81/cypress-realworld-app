@@ -39,6 +39,9 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
 const TransactionTitle: React.FC<{
   transaction: TransactionResponseItem;
 }> = ({ transaction }) => {
+  const requestAction = isAcceptedRequestTransaction(transaction) ? " charged " : " requested ";
+  const transactionAction = isRequestTransaction(transaction) ? requestAction : " paid ";
+
   return (
     <StyledTypography color="textSecondary" className={classes.title} gutterBottom>
       <Typography
@@ -55,11 +58,7 @@ const TransactionTitle: React.FC<{
         className={classes.titleAction}
         component="span"
       >
-        {isRequestTransaction(transaction)
-          ? isAcceptedRequestTransaction(transaction)
-            ? " charged "
-            : " requested "
-          : " paid "}
+        {transactionAction}
       </Typography>
       <Typography
         data-test={`transaction-receiver-${transaction.id}`}
