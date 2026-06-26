@@ -9,7 +9,7 @@ export const usersMachine = dataMachine("users").withConfig({
       const payload = omit("type", event);
       let route = isEmpty(payload) ? "users" : "users/search";
       const resp = await httpClient.get(`http://localhost:${backendPort}/${route}`, {
-        params: !isEmpty(payload) ? payload : undefined,
+        params: isEmpty(payload) ? undefined : payload,
       });
       return resp.data;
     },
