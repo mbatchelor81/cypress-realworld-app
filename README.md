@@ -16,15 +16,15 @@
     <img src="https://img.shields.io/endpoint?url=https://cloud.cypress.io/badge/detailed/7s5okt/develop&style=flat&logo=cypress" />
   </a>
 
-  <a href="https://codecov.io/gh/cypress-io/cypress-realworld-app">
-    <img src="https://codecov.io/gh/cypress-io/cypress-realworld-app/branch/develop/graph/badge.svg" />
+  <a href="https://codecov.io/gh/mbatchelor81/cypress-realworld-app">
+    <img src="https://codecov.io/gh/mbatchelor81/cypress-realworld-app/branch/develop/graph/badge.svg" />
   </a>
 
   <a href="https://percy.io/cypress-io/cypress-realworld-app">
     <img src="https://percy.io/static/images/percy-badge.svg" />
   </a>
 
-   <a href="#contributors-">
+   <a href="#contributors">
     <img src="https://img.shields.io/badge/all_contributors-6-green.svg?style=flat" />
   </a>
 </p>
@@ -37,7 +37,7 @@ A payment application to demonstrate <strong>real-world</strong> usage of <a hre
   <img style='width: 70%' alt="Cypress Real World App" src="./public/img/rwa-readme-screenshot.png" />
 </p>
 
-> 💬 **Note from maintainers**
+> **Note from maintainers**
 >
 > This application is purely for demonstration and educational purposes. Its setup and configuration resemble typical real-world applications, but it's not a full-fledged production system. Use this app to learn, experiment, tinker, and practice application testing with Cypress.
 >
@@ -47,27 +47,31 @@ A payment application to demonstrate <strong>real-world</strong> usage of <a hre
 
 ## Features
 
-🛠 Built with [React][reactjs], [XState][xstate], [Express][express], [lowdb][lowdb], [Material-UI][material-ui] and [TypeScript][typescript]
-⚡️ Zero database dependencies
-🚀 Full-stack [Express][express]/[React][reactjs] application with real-world features and tests
-👮‍♂️ Local Authentication
-🔥 Database Seeding with End-to-end Tests
-💻 CI/CD + [Cypress Cloud][cypresscloud]
+- Built with [React][reactjs] 18, [XState][xstate], [Express][express], [Supabase][supabase] (PostgreSQL), [Material-UI][material-ui], and [TypeScript][typescript]
+- Bundled with [Vite][vite] for fast development and builds
+- Tested with [Cypress][cypress] 15 (E2E, component, and API tests) and [Vitest][vitest] (unit tests)
+- Full-stack [Express][express]/[React][reactjs] application with real-world features and tests
+- Local authentication via [Passport.js][passport]
+- 3rd party authentication support ([Auth0](#auth0), [Okta](#okta), [Amazon Cognito](#amazon-cognito), [Google](#google))
+- Database seeding with end-to-end tests
+- CI/CD via [CircleCI][circleci] + [Cypress Cloud][cypresscloud]
+- Code coverage with [@cypress/code-coverage][cypresscoverage] and [Codecov][codecov]
+- Visual regression testing with [Percy][percy]
 
 ## Getting Started
 
-The Cypress Real-World App (RWA) is a full-stack Express/React application backed by a local JSON database ([lowdb]).
+The Cypress Real-World App (RWA) is a full-stack Express/React application backed by [Supabase][supabase] (PostgreSQL).
 
-The app is bundled with [example data](./data/database.json) (`data/database.json`) that contains everything you need to start using the app and run tests out-of-the-box.
+The app is bundled with [example data](./data/database-seed.json) that is seeded into the database on startup, containing everything you need to start using the app and run tests out-of-the-box.
 
-> 🚩 **Note**
+> **Note**
 >
-> You can login to the app with any of the [example app users](./data/database.json#L2). The default password for all users is `s3cret`.
+> You can login to the app with any of the example app users. The default password for all users is `s3cret`.
 > Example users can be seen by running `yarn list:dev:users`.
 
 ### Prerequisites
 
-This project requires [Node.js](https://nodejs.org/en/) to be installed on your machine. Refer to the [.node-version](./.node-version) file for the exact version.
+This project requires [Node.js](https://nodejs.org/en/) version 20 or 22. Refer to the [.node-version](./.node-version) file for the exact version.
 
 [Yarn Classic](https://classic.yarnpkg.com/) is also required. Once you have [Node.js](https://nodejs.org/en/) installed, execute the following to install the npm module [yarn](https://www.npmjs.com/package/yarn) (Classic - version 1) globally.
 
@@ -86,7 +90,7 @@ If you have Node.js' experimental [Corepack](https://nodejs.org/dist/latest/docs
 To clone the repo to your local system and install dependencies, execute the following commands:
 
 ```shell
-git clone https://github.com/cypress-io/cypress-realworld-app
+git clone https://github.com/mbatchelor81/cypress-realworld-app
 cd cypress-realworld-app
 yarn
 ```
@@ -97,13 +101,32 @@ yarn
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true yarn install
 ```
 
+### Environment Setup
+
+The application uses [Supabase][supabase] as its database backend. To configure your environment, copy the example file and fill in your Supabase credentials:
+
+```shell
+cp .env.example .env
+```
+
+The key environment variables in [.env.example](./.env.example):
+
+| Variable                    | Description               | Default           |
+| --------------------------- | ------------------------- | ----------------- |
+| `PORT`                      | Frontend port             | `3000`            |
+| `VITE_BACKEND_PORT`         | Backend API port          | `3001`            |
+| `SUPABASE_URL`              | Supabase project URL      | _(set in `.env`)_ |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | _(set in `.env`)_ |
+
+Update `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in your `.env` with credentials from your own Supabase project. The database schema migration is located at [`supabase/migrations/001_init.sql`](./supabase/migrations/001_init.sql).
+
 ### Run the app
 
 ```shell
 yarn dev
 ```
 
-> 🚩 **Note**
+> **Note**
 >
 > The app will run on port `3000` (frontend) and `3001` (API backend) by default. Please make sure there are no other applications or services running on both ports.
 > If you want to change the default ports, you can do so by modifying `PORT` and `VITE_BACKEND_PORT` variables in `.env` file.
@@ -115,7 +138,7 @@ yarn dev
 yarn cypress:open
 ```
 
-> 🚩 **Note**
+> **Note**
 >
 > If you have changed the default ports, then you need to update Cypress configuration file (`cypress.config.ts`) locally.
 > There are three properties that you need to update in `cypress.config.ts`: `e2e.baseUrl`, `env.apiUrl`, and `env.url`.
@@ -149,32 +172,39 @@ yarn cypress:open
 
 ## Database
 
-- The local JSON database is located in [data/database.json](./data/database.json) and is managed with [lowdb].
+- The application uses [Supabase][supabase] (PostgreSQL) as its data layer. The Supabase client is configured in [`backend/supabase-client.ts`](./backend/supabase-client.ts) and all database operations are managed through [`backend/database.ts`](./backend/database.ts).
 
 - The database is [reseeded](./data/database-seed.json) each time the application is started (via `yarn dev`). Database seeding is done in between each [Cypress End-to-End test](./cypress/tests).
 
-- Updates via the React frontend are sent to the [Express][express] server and handled by a set of [database utilities](backend/database.ts)
+- Updates via the React frontend are sent to the [Express][express] server and handled by a set of [database utilities](backend/database.ts).
 
-- Generate a new database using `yarn db:seed`.
+- Generate a new database seed using `yarn db:seed`.
 
 - An [empty database seed](./data/empty-seed.json) is provided along with a script (`yarn start:empty`) to view the application without data.
 
-## Additional NPM Scripts
+- The database schema migration is located at [`supabase/migrations/001_init.sql`](./supabase/migrations/001_init.sql).
 
-| Script         | Description                                                                                                                                                                       |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| dev            | Starts backend in watch mode and frontend                                                                                                                                         |
-| dev:coverage   | Starts backend in watch mode and frontend with instrumented code coverage enabled                                                                                                 |
-| dev:auth0      | Starts backend in watch mode and frontend; [Uses Auth0 for Authentication](#auth0) > [Read Guide](http://on.cypress.io/auth0)                                                     |
-| dev:okta       | Starts backend in watch mode and frontend; [Uses Okta for Authentication](#okta) > [Read Guide](http://on.cypress.io/okta)                                                        |
-| dev:cognito    | Starts backend in watch mode and frontend; [Uses Cognito for Authentication](#amazon-cognito) > [Read Guide](http://on.cypress.io/amazon-cognito)                                 |
-| dev:google     | Starts backend in watch mode and frontend; [Uses Google for Authentication](#google) > [Read Guide](https://docs.cypress.io/guides/testing-strategies/google-authentication.html) |
-| start          | Starts backend and frontend                                                                                                                                                       |
-| types          | Validates types                                                                                                                                                                   |
-| db:seed        | Generates fresh database seeds for json files in /data                                                                                                                            |
-| start:empty    | Starts backend, frontend and Cypress with empty database seed                                                                                                                     |
-| tsnode         | Customized ts-node command to get around react-scripts restrictions                                                                                                               |
-| list:dev:users | Provides id and username for users in the dev database                                                                                                                            |
+## NPM Scripts
+
+| Script            | Description                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| dev               | Starts backend in watch mode and frontend                                                                                                                                         |
+| dev:coverage      | Starts backend in watch mode and frontend with instrumented code coverage enabled                                                                                                 |
+| dev:auth0         | Starts backend in watch mode and frontend; [Uses Auth0 for Authentication](#auth0) > [Read Guide](http://on.cypress.io/auth0)                                                     |
+| dev:okta          | Starts backend in watch mode and frontend; [Uses Okta for Authentication](#okta) > [Read Guide](http://on.cypress.io/okta)                                                        |
+| dev:cognito       | Starts backend in watch mode and frontend; [Uses Cognito for Authentication](#amazon-cognito) > [Read Guide](http://on.cypress.io/amazon-cognito)                                 |
+| dev:google        | Starts backend in watch mode and frontend; [Uses Google for Authentication](#google) > [Read Guide](https://docs.cypress.io/guides/testing-strategies/google-authentication.html) |
+| start             | Starts backend and frontend                                                                                                                                                       |
+| build             | Builds the frontend with Vite                                                                                                                                                     |
+| lint              | Runs ESLint and Prettier checks                                                                                                                                                   |
+| types             | Validates TypeScript types                                                                                                                                                        |
+| test:unit         | Runs Vitest unit tests in watch mode                                                                                                                                              |
+| test:unit:ci      | Runs Vitest unit tests (single run)                                                                                                                                               |
+| test:component:ci | Runs Cypress component tests                                                                                                                                                      |
+| test:api          | Runs Cypress API tests                                                                                                                                                            |
+| db:seed           | Generates fresh database seeds for json files in /data                                                                                                                            |
+| start:empty       | Starts backend, frontend and Cypress with empty database seed                                                                                                                     |
+| list:dev:users    | Provides id and username for users in the dev database                                                                                                                            |
 
 For a complete list of scripts see [package.json](./package.json)
 
@@ -260,17 +290,25 @@ The **only passing spec** when run with `yarn dev:google` will be the [google sp
 
 ## License
 
-[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cypress-io/cypress/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/mbatchelor81/cypress-realworld-app/blob/develop/LICENSE)
 
 This project is licensed under the terms of the [MIT license](/LICENSE).
 
 [reactjs]: https://reactjs.org
 [xstate]: https://xstate.js.org
 [express]: https://expressjs.com
-[lowdb]: https://github.com/typicode/lowdb
+[supabase]: https://supabase.com
 [typescript]: https://typescriptlang.org
 [cypresscloud]: https://cloud.cypress.io/projects/7s5okt/runs
 [material-ui]: https://material-ui.com
+[vite]: https://vite.dev
+[vitest]: https://vitest.dev
+[cypress]: https://cypress.io
+[passport]: https://www.passportjs.org
+[circleci]: https://circleci.com
+[cypresscoverage]: https://github.com/cypress-io/code-coverage
+[codecov]: https://codecov.io
+[percy]: https://percy.io
 [okta]: https://okta.com
 [auth0]: https://auth0.com
 [oktacreateapp]: https://developer.okta.com/docs/guides/sign-into-spa/react/create-okta-application/
@@ -278,7 +316,7 @@ This project is licensed under the terms of the [MIT license](/LICENSE).
 [awsamplify]: https://amplify.aws
 [google]: https://google.com
 
-## Contributors ✨
+## Contributors
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
