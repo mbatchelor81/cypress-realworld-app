@@ -29,10 +29,10 @@ const Root = styled("div")(({ theme }) => ({
 Amplify.configure(awsConfig as ResourcesConfig);
 
 // @ts-ignore
-if (window.Cypress) {
+if (globalThis.Cypress) {
   // Expose authService on window for Cypress
   // @ts-ignore
-  window.authService = authService;
+  globalThis.authService = authService;
 }
 
 const AppCognito: React.FC = /* istanbul ignore next */ () => {
