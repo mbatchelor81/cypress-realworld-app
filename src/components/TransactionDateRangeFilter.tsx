@@ -158,19 +158,21 @@ const TransactionListDateRangeFilter: React.FC<TransactionListDateRangeFilterPro
   );
 };
 
-export function RangeCalendar({
-  onCalendarSelect,
-  xsBreakpoint,
-  color,
-  dataTest,
-  defaultValue,
-}: {
+export type RangeCalendarProps = {
   onCalendarSelect: (value: Value) => void;
   xsBreakpoint: boolean;
   color: Record<string, string>;
   dataTest: string;
   defaultValue: Value;
-}) {
+};
+
+export const RangeCalendar: React.FC<RangeCalendarProps> = ({
+  onCalendarSelect,
+  xsBreakpoint,
+  color,
+  dataTest,
+  defaultValue,
+}) => {
   const [value, setValue] = useState<Value>(defaultValue);
 
   const width = xsBreakpoint ? window.innerWidth : 350;
@@ -195,6 +197,6 @@ export function RangeCalendar({
       <Calendar onChange={handleChange} value={value} selectRange={true} />
     </div>
   );
-}
+};
 
 export default TransactionListDateRangeFilter;
