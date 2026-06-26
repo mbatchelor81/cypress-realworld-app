@@ -6,7 +6,7 @@ import { User } from "../models";
 export interface UserListItemProps {
   user: User;
   setReceiver: Function;
-  index: Number;
+  index: number;
 }
 
 const UserListItem: React.FC<UserListItemProps> = ({ user, setReceiver, index }) => {
