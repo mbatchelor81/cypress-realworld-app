@@ -37,17 +37,15 @@ const TransactionPublicList: React.FC<TransactionPublicListProps> = ({
     send("FETCH", { page, ...dateRangeFilters, ...amountRangeFilters });
 
   return (
-    <>
-      <TransactionList
-        filterComponent={filterComponent}
-        header="Public"
-        transactions={results as TransactionResponseItem[]}
-        isLoading={current.matches("loading")}
-        loadNextPage={loadNextPage}
-        pagination={pageData as TransactionPagination}
-        showCreateButton
-      />
-    </>
+    <TransactionList
+      filterComponent={filterComponent}
+      header="Public"
+      transactions={results as TransactionResponseItem[]}
+      isLoading={current.matches("loading")}
+      loadNextPage={loadNextPage}
+      pagination={pageData as TransactionPagination}
+      showCreateButton
+    />
   );
 };
 
