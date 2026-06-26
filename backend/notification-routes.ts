@@ -19,7 +19,7 @@ const router = express.Router();
 //GET /notifications/
 router.get("/", ensureAuthenticated, async (req, res) => {
   /* istanbul ignore next */
-  const notifications = await getUnreadNotificationsByUserId(req.user?.id!);
+  const notifications = await getUnreadNotificationsByUserId(req.user?.id);
 
   res.status(200);
   res.json({ results: notifications });
@@ -33,7 +33,7 @@ router.post(
   async (req, res) => {
     const { items } = req.body;
     /* istanbul ignore next */
-    const notifications = await createNotifications(req.user?.id!, items);
+    const notifications = await createNotifications(req.user?.id, items);
 
     res.status(200);
     // @ts-ignore
@@ -49,7 +49,7 @@ router.patch(
   async (req, res) => {
     const { notificationId } = req.params;
     /* istanbul ignore next */
-    await updateNotificationById(req.user?.id!, notificationId, req.body);
+    await updateNotificationById(req.user?.id, notificationId, req.body);
 
     res.sendStatus(204);
   }
