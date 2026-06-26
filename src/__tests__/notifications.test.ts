@@ -122,7 +122,7 @@ describe("Notifications", () => {
     const notifications = await getNotificationsByUserId(user.id);
 
     expect(notifications.length).toBeGreaterThan(1);
-    expect(notifications[notifications.length - 1]).toMatchObject({
+    expect(notifications.at(-1)).toMatchObject({
       transactionId: transaction.id,
     });
   });
