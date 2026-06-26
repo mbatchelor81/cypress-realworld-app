@@ -165,7 +165,7 @@ export const getAllByObj = async (entity: keyof DbSchema, query: Record<string, 
 };
 
 // Search
-export const cleanSearchQuery = (query: string) => query.replace(/[^a-zA-Z0-9]/g, "");
+export const cleanSearchQuery = (query: string) => query.replaceAll(/[^a-zA-Z0-9]/g, "");
 
 export const searchUsers = async (query: string): Promise<User[]> => {
   const cleaned = cleanSearchQuery(query);
