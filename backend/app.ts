@@ -1,3 +1,4 @@
+import { createServer } from "http";
 import express from "express";
 import { join } from "path";
 import logger from "morgan";
@@ -25,6 +26,7 @@ import bankTransferRoutes from "./banktransfer-routes";
 import testDataRoutes from "./testdata-routes";
 import { checkAuth0Jwt, verifyOktaToken, checkCognitoJwt, checkGoogleJwt } from "./helpers";
 import resolvers from "./graphql/resolvers";
+import { setupNotificationWsServer } from "./notification-ws";
 import { frontendPort, getBackendPort } from "../src/utils/portUtils";
 
 require("dotenv").config();
@@ -51,21 +53,23 @@ if (global.__coverage__) {
   require("@cypress/code-coverage/middleware/express")(app);
 }
 
+const sessionMiddleware = session({
+  secret: "session secret",
+  resave: false,
+  saveUninitialized: false,
+  unset: "destroy",
+});
+const passportInitialize = passport.initialize();
+const passportSession = passport.session();
+
 app.use(cors(corsOption));
 app.use(logger("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use(
-  session({
-    secret: "session secret",
-    resave: false,
-    saveUninitialized: false,
-    unset: "destroy",
-  })
-);
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(sessionMiddleware);
+app.use(passportInitialize);
+app.use(passportSession);
 
 app.use(paginate.middleware(+process.env.PAGINATION_PAGE_SIZE!));
 
@@ -120,6 +124,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
+const httpServer = createServer(app);
+setupNotificationWsServer(httpServer, [sessionMiddleware, passportInitialize, passportSession]);
+
 getBackendPort().then((port) => {
-  app.listen(port);
+  httpServer.listen(port);
 });
