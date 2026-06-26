@@ -4,7 +4,6 @@ import { Router, withRouter } from "react-router-dom";
 import {
   createTheme,
   ThemeProvider,
-  Theme,
   StyledEngineProvider,
   adaptV4Theme,
 } from "@mui/material";
