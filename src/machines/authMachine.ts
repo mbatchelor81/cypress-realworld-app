@@ -241,7 +241,7 @@ export const authMachine = Machine<AuthMachineContext, AuthMachineSchema, AuthMa
       redirectHomeAfterLogin: async (ctx, event) => {
         if (history.location.pathname === "/signin") {
           /* istanbul ignore next */
-          window.location.pathname = "/";
+          globalThis.location.pathname = "/";
         }
       },
       resetUser: assign((ctx: any, event: any) => ({
