@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import express from "express";
 import history from "connect-history-api-fallback";
 import setupProxy from "../src/setupProxy";
