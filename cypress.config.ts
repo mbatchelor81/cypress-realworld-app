@@ -16,7 +16,9 @@ let awsConfig = {
 
 try {
   awsConfig = require(path.join(__dirname, "./aws-exports-es5.js"));
-} catch (e) {}
+} catch (e) {
+  console.debug("aws-exports-es5.js not found, using default config");
+}
 
 export default defineConfig({
   projectId: "7s5okt",
