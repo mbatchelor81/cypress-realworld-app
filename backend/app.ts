@@ -1,5 +1,5 @@
 import express from "express";
-import { join } from "path";
+import { join } from "node:path";
 import logger from "morgan";
 import passport from "passport";
 import session from "express-session";
