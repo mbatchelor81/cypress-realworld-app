@@ -45,23 +45,25 @@ const AppOkta: React.FC = () => {
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
   // @ts-ignore
-  if (window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
-    useEffect(() => {
+  const isCypressProgrammatic = !!window.Cypress && !!process.env.VITE_OKTA_PROGRAMMATIC;
+
+  useEffect(() => {
+    if (isCypressProgrammatic) {
       const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
       authService.send("OKTA", {
         user: okta.user,
         token: okta.token,
       });
-    }, []);
-  } else {
-    useEffect(() => {
-      if (oktaAuthState.isAuthenticated) {
-        oktaAuthService.getUser().then((user: any) => {
-          authService.send("OKTA", { user, token: oktaAuthState.accessToken });
-        });
-      }
-    }, [oktaAuthState, oktaAuthService]);
-  }
+    }
+  }, [isCypressProgrammatic]);
+
+  useEffect(() => {
+    if (!isCypressProgrammatic && oktaAuthState.isAuthenticated) {
+      oktaAuthService.getUser().then((user: any) => {
+        authService.send("OKTA", { user, token: oktaAuthState.accessToken });
+      });
+    }
+  }, [isCypressProgrammatic, oktaAuthState, oktaAuthService]);
 
   const isLoggedIn =
     authState.matches("authorized") ||
