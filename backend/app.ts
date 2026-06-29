@@ -47,7 +47,7 @@ const app = express();
 
 /* istanbul ignore next */
 // @ts-ignore
-if (global.__coverage__) {
+if (globalThis.__coverage__) {
   require("@cypress/code-coverage/middleware/express")(app);
 }
 

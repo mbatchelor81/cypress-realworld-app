@@ -35,7 +35,7 @@ Cypress.Commands.add("loginByCognitoApi", (username: string, password: string) =
     const keyPrefix = `CognitoIdentityServiceProvider.${clientId}`;
     const keyPrefixWithUsername = `${keyPrefix}.${accessTokenSub}`;
 
-    const ls = window.localStorage;
+    const ls = globalThis.localStorage;
     ls.setItem(`${keyPrefixWithUsername}.idToken`, idToken);
     ls.setItem(`${keyPrefixWithUsername}.accessToken`, accessToken);
     ls.setItem(`${keyPrefix}.LastAuthUser`, accessTokenSub);

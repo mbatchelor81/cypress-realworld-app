@@ -25,10 +25,10 @@ const Root = styled("div")(({ theme }) => ({
 }));
 
 // @ts-ignore
-if (window.Cypress) {
+if (globalThis.Cypress) {
   // Expose authService on window for Cypress
   // @ts-ignore
-  window.authService = authService;
+  globalThis.authService = authService;
 }
 
 /* istanbul ignore next */
