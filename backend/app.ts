@@ -120,6 +120,7 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
+// NOSONAR: Top-level await is not supported here because the backend runs under CommonJS (tsconfig.tsnode.json).
 getBackendPort().then((port) => {
   app.listen(port);
 });
