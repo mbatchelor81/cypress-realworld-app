@@ -36,6 +36,13 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
+function getTransactionAction(transaction: TransactionResponseItem): string {
+  if (!isRequestTransaction(transaction)) {
+    return " paid ";
+  }
+  return isAcceptedRequestTransaction(transaction) ? " charged " : " requested ";
+}
+
 const TransactionTitle: React.FC<{
   transaction: TransactionResponseItem;
 }> = ({ transaction }) => {
@@ -55,11 +62,7 @@ const TransactionTitle: React.FC<{
         className={classes.titleAction}
         component="span"
       >
-        {isRequestTransaction(transaction)
-          ? isAcceptedRequestTransaction(transaction)
-            ? " charged "
-            : " requested "
-          : " paid "}
+        {getTransactionAction(transaction)}
       </Typography>
       <Typography
         data-test={`transaction-receiver-${transaction.id}`}
