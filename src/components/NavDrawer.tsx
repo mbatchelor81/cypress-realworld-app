@@ -114,7 +114,7 @@ const drawerWidth = 240;
 
 export const mainListItems = (
   toggleDrawer: ((event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void) | undefined,
-  showTemporaryDrawer: Boolean
+  showTemporaryDrawer: boolean
 ) => (
   <div>
     <ListItem
