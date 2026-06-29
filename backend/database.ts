@@ -499,7 +499,7 @@ export const getPublicTransactionsByQuery = async (
       getNonContactPublicTransactionsForApi(userId),
     ]);
 
-    let filteredPublic = nonContactPublic as TransactionResponseItem[];
+    let filteredPublic = nonContactPublic;
 
     if (dateRangeStart && dateRangeEnd) {
       filteredPublic = filteredPublic.filter((t) =>
