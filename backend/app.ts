@@ -120,6 +120,9 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
-getBackendPort().then((port) => {
+// Wrapped in an async IIFE because the backend is compiled to CommonJS
+// (tsconfig.tsnode.json), where top-level await is not supported.
+(async () => {
+  const port = await getBackendPort();
   app.listen(port);
-});
+})();
