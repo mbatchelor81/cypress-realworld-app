@@ -34,6 +34,35 @@ if (window.Cypress) {
 }
 
 /* istanbul ignore next */
+const CypressOktaAuth: React.FC = () => {
+  useEffect(() => {
+    const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
+    authService.send("OKTA", {
+      user: okta.user,
+      token: okta.token,
+    });
+  }, []);
+
+  return null;
+};
+
+/* istanbul ignore next */
+const OktaAuth: React.FC<{ oktaAuthState: any; oktaAuthService: any }> = ({
+  oktaAuthState,
+  oktaAuthService,
+}) => {
+  useEffect(() => {
+    if (oktaAuthState.isAuthenticated) {
+      oktaAuthService.getUser().then((user: any) => {
+        authService.send("OKTA", { user, token: oktaAuthState.accessToken });
+      });
+    }
+  }, [oktaAuthState, oktaAuthService]);
+
+  return null;
+};
+
+/* istanbul ignore next */
 const AppOkta: React.FC = () => {
   const { authState: oktaAuthState, oktaAuth: oktaAuthService } = useOktaAuth();
 
@@ -44,25 +73,6 @@ const AppOkta: React.FC = () => {
 
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
-  // @ts-ignore
-  if (window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
-    useEffect(() => {
-      const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
-      authService.send("OKTA", {
-        user: okta.user,
-        token: okta.token,
-      });
-    }, []);
-  } else {
-    useEffect(() => {
-      if (oktaAuthState.isAuthenticated) {
-        oktaAuthService.getUser().then((user: any) => {
-          authService.send("OKTA", { user, token: oktaAuthState.accessToken });
-        });
-      }
-    }, [oktaAuthState, oktaAuthService]);
-  }
-
   const isLoggedIn =
     authState.matches("authorized") ||
     authState.matches("refreshing") ||
@@ -71,6 +81,15 @@ const AppOkta: React.FC = () => {
   return (
     <Root className={classes.root}>
       <CssBaseline />
+
+      {
+        // @ts-ignore
+        window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC ? (
+          <CypressOktaAuth />
+        ) : (
+          <OktaAuth oktaAuthState={oktaAuthState} oktaAuthService={oktaAuthService} />
+        )
+      }
 
       {isLoggedIn && (
         <PrivateRoutesContainer
