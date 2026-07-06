@@ -24,9 +24,9 @@ const TransactionPersonalList: React.FC<TransactionPersonalListProps> = ({
   const { pageData, results } = current.context;
 
   // @ts-ignore
-  if (window.Cypress) {
+  if (globalThis.Cypress) {
     // @ts-ignore
-    window.personalTransactionService = personalTransactionService;
+    globalThis.personalTransactionService = personalTransactionService;
   }
 
   useEffect(() => {
