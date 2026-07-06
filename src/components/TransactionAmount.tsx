@@ -27,7 +27,7 @@ const StyledTypography = styled(Typography)(({ theme }) => ({
     },
     color: "red",
   },
-})) as typeof Typography;
+}));
 
 const TransactionAmount: React.FC<{
   transaction: TransactionResponseItem;
