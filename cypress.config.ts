@@ -16,7 +16,11 @@ let awsConfig = {
 
 try {
   awsConfig = require(path.join(__dirname, "./aws-exports-es5.js"));
-} catch (e) {}
+} catch (e) {
+  // aws-exports-es5.js is optional (only present when using Amazon Cognito auth);
+  // fall back to the default awsConfig when it is not available.
+  console.warn("aws-exports-es5.js not found, using default awsConfig:", (e as Error).message);
+}
 
 export default defineConfig({
   projectId: "7s5okt",
