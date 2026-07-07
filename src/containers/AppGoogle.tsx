@@ -47,27 +47,28 @@ const AppGoogle: React.FC = () => {
 
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
-  // @ts-ignore
-  if (window.Cypress) {
-    useEffect(() => {
+  useEffect(() => {
+    // @ts-ignore
+    if (window.Cypress) {
       const { user, token } = JSON.parse(localStorage.getItem("googleCypress")!);
       authService.send("GOOGLE", {
         user,
         token,
       });
-    }, []);
-  } else {
-    useGoogleLogin({
-      clientId: process.env.VITE_GOOGLE_CLIENTID!,
-      onSuccess: (res) => {
-        console.log("onSuccess", res);
-        // @ts-ignore
-        authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
-      },
-      cookiePolicy: "single_host_origin",
-      isSignedIn: true,
-    });
-  }
+    }
+  }, []);
+
+  useGoogleLogin({
+    clientId: process.env.VITE_GOOGLE_CLIENTID!,
+    onSuccess: (res) => {
+      console.log("onSuccess", res);
+      // @ts-ignore
+      authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
+    },
+    cookiePolicy: "single_host_origin",
+    // @ts-ignore
+    isSignedIn: !window.Cypress,
+  });
 
   const isLoggedIn = authState.matches("authorized");
 
