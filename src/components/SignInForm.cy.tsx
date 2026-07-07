@@ -37,7 +37,7 @@ describe("SignInForm", () => {
     );
     cy.get("[data-test*=signin-username]").type("Katharina_Bernier");
     cy.get("[data-test*=signin-password]").type("s3cret");
-    cy.get("[data-test*=signin-submit]").click(); //.should("be.disabled");
+    cy.get("[data-test*=signin-submit]").click();
 
     cy.wait("@loginPost");
 
