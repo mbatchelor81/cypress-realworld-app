@@ -99,10 +99,10 @@ router.get(
     const isFirstPage = (req.query.page as unknown as number) === 1;
 
     /* istanbul ignore next */
-    let transactions = !isEmpty(req.query)
-      ? await getPublicTransactionsByQuery(req.user?.id!, req.query)
-      : /* istanbul ignore next */
-        await getPublicTransactionsDefaultSort(req.user?.id!);
+    let transactions = isEmpty(req.query)
+      ? /* istanbul ignore next */
+        await getPublicTransactionsDefaultSort(req.user?.id!)
+      : await getPublicTransactionsByQuery(req.user?.id!, req.query);
 
     const { contactsTransactions, publicTransactions } = transactions;
 
