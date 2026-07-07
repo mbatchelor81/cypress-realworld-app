@@ -16,7 +16,11 @@ let awsConfig = {
 
 try {
   awsConfig = require(path.join(__dirname, "./aws-exports-es5.js"));
-} catch (e) {}
+} catch (e) {
+  // aws-exports-es5.js is optional and generated only when AWS auth is configured;
+  // fall back to the default awsConfig when it is not present.
+  console.debug("aws-exports-es5.js not found, using default awsConfig", e);
+}
 
 export default defineConfig({
   projectId: "7s5okt",
