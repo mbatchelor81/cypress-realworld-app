@@ -1,7 +1,7 @@
 import { defineConfig, mergeConfig, loadEnv } from "vite";
 import viteConfig from "./vite.config";
 
-export default defineConfig(({ mode } = { mode: "development", command: "serve" }) =>
+export default defineConfig(({ mode = "development" } = {}) =>
   mergeConfig(
     viteConfig({ mode, command: "serve" }),
     defineConfig({
