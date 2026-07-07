@@ -12,10 +12,10 @@ import PrivateRoutesContainer from "./PrivateRoutesContainer";
 import { GoogleLogin, useGoogleLogin } from "@matheusluizn/react-google-login";
 
 // @ts-ignore
-if (window.Cypress) {
-  // Expose authService on window for Cypress
+if (globalThis.Cypress) {
+  // Expose authService on globalThis for Cypress
   // @ts-ignore
-  window.authService = authService;
+  globalThis.authService = authService;
 }
 
 const PREFIX = "AppGoogle";
@@ -48,7 +48,7 @@ const AppGoogle: React.FC = () => {
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
   // @ts-ignore
-  if (window.Cypress) {
+  if (globalThis.Cypress) {
     useEffect(() => {
       const { user, token } = JSON.parse(localStorage.getItem("googleCypress")!);
       authService.send("GOOGLE", {
