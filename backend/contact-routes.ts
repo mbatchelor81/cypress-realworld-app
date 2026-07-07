@@ -26,7 +26,7 @@ router.post(
   async (req, res) => {
     const { contactUserId } = req.body;
     /* istanbul ignore next */
-    const contact = await createContactForUser(req.user?.id!, contactUserId);
+    const contact = await createContactForUser(req.user?.id as string, contactUserId);
 
     res.status(200);
     res.json({ contact });
