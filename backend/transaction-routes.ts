@@ -37,7 +37,7 @@ router.get(
   ]),
   async (req, res) => {
     /* istanbul ignore next */
-    const transactions = await getTransactionsForUserForApi(req.user?.id, req.query);
+    const transactions = await getTransactionsForUserForApi(req.user?.id as string, req.query);
 
     const { totalPages, data: paginatedItems } = getPaginatedItems(
       req.query.page as unknown as number,
@@ -69,7 +69,7 @@ router.get(
   ]),
   async (req, res) => {
     /* istanbul ignore next */
-    const transactions = await getTransactionsForUserContacts(req.user?.id, req.query);
+    const transactions = await getTransactionsForUserContacts(req.user?.id as string, req.query);
 
     const { totalPages, data: paginatedItems } = getPaginatedItems(
       req.query.page as unknown as number,
@@ -100,9 +100,9 @@ router.get(
 
     /* istanbul ignore next */
     let transactions = !isEmpty(req.query)
-      ? await getPublicTransactionsByQuery(req.user?.id, req.query)
+      ? await getPublicTransactionsByQuery(req.user?.id as string, req.query)
       : /* istanbul ignore next */
-        await getPublicTransactionsDefaultSort(req.user?.id);
+        await getPublicTransactionsDefaultSort(req.user?.id as string);
 
     const { contactsTransactions, publicTransactions } = transactions;
 
@@ -145,7 +145,7 @@ router.post(
     remove("transactionType", transactionPayload);
 
     /* istanbul ignore next */
-    const transaction = await createTransaction(req.user?.id, transactionType, transactionPayload);
+    const transaction = await createTransaction(req.user?.id as string, transactionType, transactionPayload);
 
     res.status(200);
     res.json({ transaction });
