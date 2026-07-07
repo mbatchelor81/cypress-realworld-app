@@ -14,7 +14,8 @@ export default defineConfig([
       pluginCypress.configs.recommended,
     ],
     rules: {
-      // TODO: review violations of disabled rules
+      // Rules disabled below to accommodate pre-existing violations in this
+      // demo app.
       'no-empty': 'off',
       'no-prototype-builtins': 'off',
       'no-undef': 'off',
