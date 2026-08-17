@@ -18,6 +18,9 @@ if (window.Cypress) {
   window.authService = authService;
 }
 
+// @ts-ignore
+const isCypress = () => Boolean(window.Cypress);
+
 const PREFIX = "AppGoogle";
 
 const classes = {
@@ -39,6 +42,35 @@ const Root = styled("div")(({ theme }) => ({
 }));
 
 /* istanbul ignore next */
+const CypressGoogleAuth: React.FC = () => {
+  useEffect(() => {
+    const { user, token } = JSON.parse(localStorage.getItem("googleCypress")!);
+    authService.send("GOOGLE", {
+      user,
+      token,
+    });
+  }, []);
+
+  return null;
+};
+
+/* istanbul ignore next */
+const GoogleAuth: React.FC = () => {
+  useGoogleLogin({
+    clientId: process.env.VITE_GOOGLE_CLIENTID!,
+    onSuccess: (res) => {
+      console.log("onSuccess", res);
+      // @ts-ignore
+      authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
+    },
+    cookiePolicy: "single_host_origin",
+    isSignedIn: true,
+  });
+
+  return null;
+};
+
+/* istanbul ignore next */
 const AppGoogle: React.FC = () => {
   const [authState] = useActor(authService);
   const [, , notificationsService] = useMachine(notificationsMachine);
@@ -47,33 +79,13 @@ const AppGoogle: React.FC = () => {
 
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
 
-  // @ts-ignore
-  if (window.Cypress) {
-    useEffect(() => {
-      const { user, token } = JSON.parse(localStorage.getItem("googleCypress")!);
-      authService.send("GOOGLE", {
-        user,
-        token,
-      });
-    }, []);
-  } else {
-    useGoogleLogin({
-      clientId: process.env.VITE_GOOGLE_CLIENTID!,
-      onSuccess: (res) => {
-        console.log("onSuccess", res);
-        // @ts-ignore
-        authService.send("GOOGLE", { user: res.profileObj, token: res.tokenId });
-      },
-      cookiePolicy: "single_host_origin",
-      isSignedIn: true,
-    });
-  }
-
   const isLoggedIn = authState.matches("authorized");
 
   return (
     <Root className={classes.root}>
       <CssBaseline />
+
+      {isCypress() ? <CypressGoogleAuth /> : <GoogleAuth />}
 
       {isLoggedIn && (
         <PrivateRoutesContainer

@@ -33,35 +33,45 @@ if (window.Cypress) {
   window.authService = authService;
 }
 
+// @ts-ignore
+const isCypressProgrammatic = () => Boolean(window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC);
+
 /* istanbul ignore next */
-const AppOkta: React.FC = () => {
+const CypressOktaAuth: React.FC = () => {
+  useEffect(() => {
+    const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
+    authService.send("OKTA", {
+      user: okta.user,
+      token: okta.token,
+    });
+  }, []);
+
+  return null;
+};
+
+/* istanbul ignore next */
+const OktaAuth: React.FC = () => {
   const { authState: oktaAuthState, oktaAuth: oktaAuthService } = useOktaAuth();
 
+  useEffect(() => {
+    if (oktaAuthState.isAuthenticated) {
+      oktaAuthService.getUser().then((user: any) => {
+        authService.send("OKTA", { user, token: oktaAuthState.accessToken });
+      });
+    }
+  }, [oktaAuthState, oktaAuthService]);
+
+  return null;
+};
+
+/* istanbul ignore next */
+const AppOkta: React.FC = () => {
   const [authState] = useActor(authService);
   const [, , notificationsService] = useMachine(notificationsMachine);
 
   const [, , snackbarService] = useMachine(snackbarMachine);
 
   const [, , bankAccountsService] = useMachine(bankAccountsMachine);
-
-  // @ts-ignore
-  if (window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC) {
-    useEffect(() => {
-      const okta = JSON.parse(localStorage.getItem("oktaCypress")!);
-      authService.send("OKTA", {
-        user: okta.user,
-        token: okta.token,
-      });
-    }, []);
-  } else {
-    useEffect(() => {
-      if (oktaAuthState.isAuthenticated) {
-        oktaAuthService.getUser().then((user: any) => {
-          authService.send("OKTA", { user, token: oktaAuthState.accessToken });
-        });
-      }
-    }, [oktaAuthState, oktaAuthService]);
-  }
 
   const isLoggedIn =
     authState.matches("authorized") ||
@@ -71,6 +81,8 @@ const AppOkta: React.FC = () => {
   return (
     <Root className={classes.root}>
       <CssBaseline />
+
+      {isCypressProgrammatic() ? <CypressOktaAuth /> : <OktaAuth />}
 
       {isLoggedIn && (
         <PrivateRoutesContainer
@@ -93,7 +105,5 @@ const AppOkta: React.FC = () => {
   );
 };
 
-let appOkta =
-  //@ts-ignore
-  window.Cypress && process.env.VITE_OKTA_PROGRAMMATIC ? AppOkta : withOktaAuth(AppOkta);
+let appOkta = isCypressProgrammatic() ? AppOkta : withOktaAuth(AppOkta);
 export default appOkta;
