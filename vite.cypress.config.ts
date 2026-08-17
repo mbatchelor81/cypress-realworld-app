@@ -1,7 +1,9 @@
-import { defineConfig, mergeConfig, loadEnv } from "vite";
+import { ConfigEnv, defineConfig, mergeConfig, loadEnv } from "vite";
 import viteConfig from "./vite.config";
 
-export default defineConfig(({ mode } = { mode: "development", command: "serve" }) =>
+const defaultConfigEnv: ConfigEnv = { mode: "development", command: "serve" };
+
+export default defineConfig(({ mode } = defaultConfigEnv) =>
   mergeConfig(
     viteConfig({ mode, command: "serve" }),
     defineConfig({
