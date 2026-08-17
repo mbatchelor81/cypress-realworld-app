@@ -120,6 +120,6 @@ app.use("/bankTransfers", bankTransferRoutes);
 
 app.use(express.static(join(__dirname, "../public")));
 
-getBackendPort().then((port) => {
-  app.listen(port);
-});
+// ts-node runs this entrypoint as CommonJS (tsconfig.tsnode.json),
+// where top-level await is unavailable.
+getBackendPort().then((port) => app.listen(port)); // NOSONAR typescript:S7785
