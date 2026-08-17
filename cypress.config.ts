@@ -16,7 +16,10 @@ let awsConfig = {
 
 try {
   awsConfig = require(path.join(__dirname, "./aws-exports-es5.js"));
-} catch (e) {}
+} catch (e) {
+  // aws-exports-es5.js is only generated when Amplify is configured
+  console.log("aws-exports-es5.js not found, skipping AWS config", e);
+}
 
 export default defineConfig({
   projectId: "7s5okt",
