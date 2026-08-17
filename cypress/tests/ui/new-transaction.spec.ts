@@ -60,7 +60,7 @@ describe("New Transaction", function () {
       .and("have.text", "Transaction Submitted!");
 
     const updatedAccountBalance = Dinero({
-      amount: ctx.user!.balance - parseInt(payment.amount) * 100,
+      amount: ctx.user!.balance - Number.parseInt(payment.amount) * 100,
     }).toFormat();
 
     if (isMobile()) {
@@ -84,7 +84,7 @@ describe("New Transaction", function () {
 
     cy.database("find", "users", { id: ctx.contact!.id })
       .its("balance")
-      .should("equal", ctx.contact!.balance + parseInt(payment.amount) * 100);
+      .should("equal", ctx.contact!.balance + Number.parseInt(payment.amount) * 100);
     cy.getBySel("alert-bar-success").should("not.exist");
     cy.visualSnapshot("Personal List Validate Transaction in List");
   });
