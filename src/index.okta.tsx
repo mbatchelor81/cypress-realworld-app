@@ -31,12 +31,12 @@ if (process.env.VITE_OKTA) {
   const oktaAuth = new OktaAuth({
     issuer: `https://${process.env.VITE_OKTA_DOMAIN}/oauth2/default`,
     clientId: process.env.VITE_OKTA_CLIENTID,
-    redirectUri: window.location.origin + "/implicit/callback",
+    redirectUri: globalThis.location.origin + "/implicit/callback",
   });
 
   const AppWithRouter = withRouter(({ history }) => {
     const restoreOriginalUri = (_oktaAuth, originalUri) =>
-      history.replace(toRelativeUrl(originalUri || "/", window.location.origin));
+      history.replace(toRelativeUrl(originalUri || "/", globalThis.location.origin));
 
     return (
       <Security oktaAuth={oktaAuth} restoreOriginalUri={restoreOriginalUri}>
