@@ -51,7 +51,7 @@ const AppCognito: React.FC = /* istanbul ignore next */ () => {
   useEffect(() => {
     if (!isLoggedIn) {
       fetchAuthSession().then((authSession) => {
-        if (authSession && authSession.tokens && authSession.tokens.accessToken) {
+        if (authSession?.tokens?.accessToken) {
           const { tokens, userSub } = authSession;
           authService.send("COGNITO", {
             accessTokenJwtString: tokens!.accessToken.toString(),
