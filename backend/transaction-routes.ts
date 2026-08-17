@@ -11,7 +11,7 @@ import {
   getTransactionsForUserForApi,
   getPublicTransactionsByQuery,
 } from "./database";
-import { ensureAuthenticated, validateMiddleware } from "./helpers";
+import { ensureAuthenticated, getAuthenticatedUserId, validateMiddleware } from "./helpers";
 import {
   sanitizeTransactionStatus,
   sanitizeRequestStatus,
@@ -37,7 +37,7 @@ router.get(
   ]),
   async (req, res) => {
     /* istanbul ignore next */
-    const transactions = await getTransactionsForUserForApi(req.user?.id!, req.query);
+    const transactions = await getTransactionsForUserForApi(getAuthenticatedUserId(req), req.query);
 
     const { totalPages, data: paginatedItems } = getPaginatedItems(
       req.query.page as unknown as number,
@@ -69,7 +69,10 @@ router.get(
   ]),
   async (req, res) => {
     /* istanbul ignore next */
-    const transactions = await getTransactionsForUserContacts(req.user?.id!, req.query);
+    const transactions = await getTransactionsForUserContacts(
+      getAuthenticatedUserId(req),
+      req.query
+    );
 
     const { totalPages, data: paginatedItems } = getPaginatedItems(
       req.query.page as unknown as number,
@@ -100,9 +103,9 @@ router.get(
 
     /* istanbul ignore next */
     let transactions = !isEmpty(req.query)
-      ? await getPublicTransactionsByQuery(req.user?.id!, req.query)
+      ? await getPublicTransactionsByQuery(getAuthenticatedUserId(req), req.query)
       : /* istanbul ignore next */
-        await getPublicTransactionsDefaultSort(req.user?.id!);
+        await getPublicTransactionsDefaultSort(getAuthenticatedUserId(req));
 
     const { contactsTransactions, publicTransactions } = transactions;
 
@@ -145,7 +148,11 @@ router.post(
     remove("transactionType", transactionPayload);
 
     /* istanbul ignore next */
-    const transaction = await createTransaction(req.user?.id!, transactionType, transactionPayload);
+    const transaction = await createTransaction(
+      getAuthenticatedUserId(req),
+      transactionType,
+      transactionPayload
+    );
 
     res.status(200);
     res.json({ transaction });

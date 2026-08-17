@@ -2,7 +2,7 @@
 
 import express from "express";
 import { getLikesByTransactionId, createLikes } from "./database";
-import { ensureAuthenticated, validateMiddleware } from "./helpers";
+import { ensureAuthenticated, getAuthenticatedUserId, validateMiddleware } from "./helpers";
 import { shortIdValidation } from "./validators";
 const router = express.Router();
 
@@ -30,7 +30,7 @@ router.post(
   async (req, res) => {
     const { transactionId } = req.params;
     /* istanbul ignore next */
-    await createLikes(req.user?.id!, transactionId);
+    await createLikes(getAuthenticatedUserId(req), transactionId);
 
     res.sendStatus(200);
   }

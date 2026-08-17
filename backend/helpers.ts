@@ -112,6 +112,16 @@ export const ensureAuthenticated = (req: Request, res: Response, next: NextFunct
   });
 };
 
+// Routes calling this are mounted behind `ensureAuthenticated`, so `req.user` is always populated.
+export const getAuthenticatedUserId = (req: Request): string => {
+  const { user } = req;
+  /* istanbul ignore next */
+  if (!user) {
+    throw new Error("Request is not authenticated");
+  }
+  return user.id;
+};
+
 export const validateMiddleware = (validations: any[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     await Promise.all(validations.map((validation: any) => validation.run(req)));
