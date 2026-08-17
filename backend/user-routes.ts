@@ -13,7 +13,7 @@ import {
   removeUserFromResults,
 } from "./database";
 import { User } from "../src/models/user";
-import { ensureAuthenticated, validateMiddleware } from "./helpers";
+import { ensureAuthenticated, getAuthenticatedUserId, validateMiddleware } from "./helpers";
 import {
   shortIdValidation,
   searchValidation,
@@ -25,18 +25,26 @@ const router = express.Router();
 // Routes
 router.get("/", ensureAuthenticated, async (req, res) => {
   /* istanbul ignore next */
-  const users = removeUserFromResults(req.user?.id!, await getAllUsers());
+  const users = removeUserFromResults(getAuthenticatedUserId(req), await getAllUsers());
   res.status(200).json({ results: users });
 });
 
-router.get("/search", ensureAuthenticated, validateMiddleware([searchValidation]), async (req, res) => {
-  const { q } = req.query;
+router.get(
+  "/search",
+  ensureAuthenticated,
+  validateMiddleware([searchValidation]),
+  async (req, res) => {
+    const { q } = req.query;
 
-  /* istanbul ignore next */
-  const users = removeUserFromResults(req.user?.id!, await searchUsers(q as string));
+    /* istanbul ignore next */
+    const users = removeUserFromResults(
+      getAuthenticatedUserId(req),
+      await searchUsers(q as string)
+    );
 
-  res.status(200).json({ results: users });
-});
+    res.status(200).json({ results: users });
+  }
+);
 
 router.post("/", userFieldsValidator, validateMiddleware(isUserValidator), async (req, res) => {
   const userDetails: User = req.body;

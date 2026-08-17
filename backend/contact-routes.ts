@@ -3,7 +3,7 @@
 import express from "express";
 
 import { getContactsByUsername, removeContactById, createContactForUser } from "./database";
-import { ensureAuthenticated, validateMiddleware } from "./helpers";
+import { ensureAuthenticated, getAuthenticatedUserId, validateMiddleware } from "./helpers";
 import { shortIdValidation } from "./validators";
 const router = express.Router();
 
@@ -26,7 +26,7 @@ router.post(
   async (req, res) => {
     const { contactUserId } = req.body;
     /* istanbul ignore next */
-    const contact = await createContactForUser(req.user?.id!, contactUserId);
+    const contact = await createContactForUser(getAuthenticatedUserId(req), contactUserId);
 
     res.status(200);
     res.json({ contact });

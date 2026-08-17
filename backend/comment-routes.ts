@@ -2,7 +2,7 @@
 
 import express from "express";
 import { getCommentsByTransactionId, createComments } from "./database";
-import { ensureAuthenticated, validateMiddleware } from "./helpers";
+import { ensureAuthenticated, getAuthenticatedUserId, validateMiddleware } from "./helpers";
 import { shortIdValidation, isCommentValidator } from "./validators";
 const router = express.Router();
 
@@ -32,7 +32,7 @@ router.post(
     const { content } = req.body;
 
     /* istanbul ignore next */
-    await createComments(req.user?.id!, transactionId, content);
+    await createComments(getAuthenticatedUserId(req), transactionId, content);
 
     res.sendStatus(200);
   }

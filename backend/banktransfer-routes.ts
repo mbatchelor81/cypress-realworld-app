@@ -3,7 +3,7 @@
 import express from "express";
 
 import { getBankTransfersByUserId } from "./database";
-import { ensureAuthenticated } from "./helpers";
+import { ensureAuthenticated, getAuthenticatedUserId } from "./helpers";
 const router = express.Router();
 
 // Routes
@@ -11,7 +11,7 @@ const router = express.Router();
 //GET /bankTransfers (scoped-user)
 router.get("/", ensureAuthenticated, async (req, res) => {
   /* istanbul ignore next */
-  const transfers = await getBankTransfersByUserId(req.user?.id!);
+  const transfers = await getBankTransfersByUserId(getAuthenticatedUserId(req));
 
   res.status(200);
   res.json({ transfers });
